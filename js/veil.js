@@ -394,47 +394,42 @@ class RealisticMirrorSystem {
         const subdivisionRegions = this.createSubdivisionRegions(width, height);
         regions.push(...subdivisionRegions);
         
-        // 各領域から実際の破片要素を作成（改良版：重複排除＆サイズフィルタ）
+        // 各領域から実際の破片要素を作成（簡素化版：確実に動作）
         const validFragments = [];
         
-        // Step 1: 全領域をサイズでソート（大きい順）
-        const sortedRegions = regions.filter(region => region.boundary && region.boundary.length >= 3)
-            .map(region => ({
-                ...region,
-                area: this.calculateRegionArea(region.boundary)
-            }))
-            .sort((a, b) => b.area - a.area);
-        
-        console.log(`🔍 Processing ${sortedRegions.length} regions, sorted by size...`);
-        
-        sortedRegions.forEach((region, index) => {
-            // サイズフィルタ: 適切な最小面積制限
-            const minArea = (window.innerWidth * window.innerHeight) / 400; // 画面の1/400に調整
-            
-            if (region.area >= minArea) {
-                // 重複チェック: より厳密な距離ベース検査
-                if (!this.isRegionOverlapping(region, validFragments)) {
+        console.log(`🔍 Total regions found: ${regions.length}`);
+        regions.forEach((region, index) => {
+            if (region.boundary && region.boundary.length >= 3) {
+                console.log(`🔍 Region ${index + 1}: Type=${region.type}, BoundaryPoints=${region.boundary.length}`);
+                
+                // 面積計算の詳細デバッグ
+                const area = this.calculateRegionArea(region.boundary);
+                const minArea = (window.innerWidth * window.innerHeight) / 800; // さらに緩和
+                
+                console.log(`📏 Area: ${Math.round(area)}, MinArea: ${Math.round(minArea)}, Pass: ${area >= minArea}`);
+                
+                if (area >= minArea && validFragments.length < 15) { // 重複チェック一時的に無効化
                     const fragment = this.createGeometricFragment(region, validFragments.length);
                     if (fragment && fragment.element) {
                         validFragments.push(fragment);
                         this.fragments.push(fragment);
                         this.cells.push(fragment);
                         this.mirrorLayer.appendChild(fragment.element);
-                        console.log(`✅ Fragment ${validFragments.length}: Area=${Math.round(region.area)}, Center=(${Math.round(region.centerX)}, ${Math.round(region.centerY)})`);
+                        console.log(`✅ Fragment ${validFragments.length} created successfully!`);
+                    } else {
+                        console.log(`❌ Fragment creation failed for region ${index + 1}`);
                     }
                 } else {
-                    console.log(`❌ Fragment skipped: overlapping with existing fragment`);
+                    console.log(`❌ Region ${index + 1} rejected: area=${Math.round(area)}, quota=${validFragments.length}/15`);
                 }
-            } else {
-                console.log(`❌ Fragment skipped: too small (${Math.round(region.area)} < ${Math.round(minArea)})`);
             }
         });
         
-        console.log(`🔍 Filtered: ${regions.length} → ${validFragments.length} valid fragments`);
+        console.log(`🎯 Final result: ${validFragments.length} valid fragments created`);
         
-        // 緊急フォールバック: 破片が1個も作られなかった場合
-        if (validFragments.length === 0) {
-            console.log(`⚠️ No fragments created! Creating emergency fallback fragments...`);
+        // 緊急フォールバック: 最低限の破片は保証
+        if (validFragments.length < 3) {
+            console.log(`⚠️ Too few fragments (${validFragments.length})! Creating emergency fragments...`);
             this.createEmergencyFragments(width, height);
         }
     }
@@ -728,33 +723,38 @@ class RealisticMirrorSystem {
     }
     
     createEmergencyFragments(width, height) {
-        // 緊急時用の簡単な破片システム
-        console.log(`🚨 Creating emergency fragments...`);
+        // 緊急時用の改良された破片システム（不規則な形状）
+        console.log(`🚨 Creating emergency fragments with irregular shapes...`);
         
         const emergencyFragments = [];
-        const fragmentCount = 12;
+        const fragmentCount = 10;
         
         for (let i = 0; i < fragmentCount; i++) {
             const angle = (i / fragmentCount) * Math.PI * 2;
-            const distance = 100 + Math.random() * 200;
+            const distance = 80 + Math.random() * 150;
             const centerX = this.centerX + Math.cos(angle) * distance;
             const centerY = this.centerY + Math.sin(angle) * distance;
             
-            // 簡単な四角形破片
-            const size = 60 + Math.random() * 40;
-            const boundary = [
-                `${centerX - size}px ${centerY - size}px`,
-                `${centerX + size}px ${centerY - size}px`,
-                `${centerX + size}px ${centerY + size}px`,
-                `${centerX - size}px ${centerY + size}px`
-            ];
+            // 不規則な多角形破片を作成
+            const boundary = [];
+            const sides = 5 + Math.floor(Math.random() * 3); // 5-7角形
+            const baseSize = 40 + Math.random() * 30;
+            
+            for (let j = 0; j < sides; j++) {
+                const vertexAngle = (j / sides) * Math.PI * 2;
+                const variation = 0.6 + Math.random() * 0.8; // サイズの変動
+                const radius = baseSize * variation;
+                const x = centerX + Math.cos(vertexAngle) * radius;
+                const y = centerY + Math.sin(vertexAngle) * radius;
+                boundary.push(`${x}px ${y}px`);
+            }
             
             const region = {
                 type: 'emergency',
                 boundary: boundary,
                 centerX: centerX,
                 centerY: centerY,
-                area: size * size * 4
+                area: baseSize * baseSize * Math.PI
             };
             
             const fragment = this.createGeometricFragment(region, i);
@@ -766,7 +766,7 @@ class RealisticMirrorSystem {
             }
         }
         
-        console.log(`🆘 Emergency fragments created: ${emergencyFragments.length}`);
+        console.log(`🆘 Emergency fragments created: ${emergencyFragments.length} irregular shapes`);
     }
 
 
