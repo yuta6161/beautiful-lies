@@ -415,6 +415,42 @@ body.truth-revealed ::selection {
     transition: opacity 0.5s ease !important;
 }
 
+/* リアル鏡システム用スタイル */
+#realistic-mirror-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 10000 !important;
+    pointer-events: auto !important;
+}
+
+.mirror-cell {
+    transition: all 0.3s ease !important;
+    cursor: pointer !important;
+}
+
+.mirror-cell:hover {
+    filter: brightness(1.3) !important;
+}
+
+/* 衝撃アニメーション */
+@keyframes impact-pulse {
+    0% { 
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 1;
+    }
+    50% { 
+        transform: translate(-50%, -50%) scale(2);
+        opacity: 0.8;
+    }
+    100% { 
+        transform: translate(-50%, -50%) scale(4);
+        opacity: 0;
+    }
+}
+
 /* レスポンシブデザイン */
 @media (max-width: 768px) {
     body.truth-revealed #truth-title {

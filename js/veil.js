@@ -1,6 +1,453 @@
 // Veil's Interactive Magic - 美しい嘘から醜い真実への変化を制御
 // "心の色が、嘘をついてる"
 
+class RealisticMirrorSystem {
+    constructor(veilMagic) {
+        this.veilMagic = veilMagic;
+        this.cells = [];
+        this.shatteredCount = 0;
+        this.totalCells = 30;
+        this.autoTriggerThreshold = Math.floor(this.totalCells * 0.6); // 60%で自動発動
+        this.isShattered = false;
+        this.mirrorLayer = null;
+        this.crackLayer = null;
+        this.voronoiPoints = [];
+    }
+
+    createRealisticMirror() {
+        if (this.isShattered) {
+            console.log('🪞 Mirror already shattered, skipping...');
+            return;
+        }
+        
+        console.log('🪞 Creating realistic broken mirror effect...');
+        this.isShattered = true;
+        
+        try {
+            // Step 1: 画面全体に鏡レイヤーを作成
+            console.log('🪞 Step 1: Creating full-screen mirror layer...');
+            this.createMirrorLayer();
+            
+            // Step 2: ボロノイ図で30個のセルを生成
+            console.log('🪞 Step 2: Generating 30 Voronoi cells...');
+            this.generateVoronoiCells();
+            
+            // Step 3: ひび割れアニメーション
+            console.log('🪞 Step 3: Starting crack animation...');
+            this.animateCrackFormation();
+            
+            console.log('🪞 ✅ Realistic mirror system fully initialized!');
+        } catch (error) {
+            console.error('❌ Error in createRealisticMirror:', error);
+            throw error;
+        }
+    }
+
+    createMirrorLayer() {
+        // 既存のレイヤーがあれば削除
+        const existing = document.getElementById('realistic-mirror-overlay');
+        if (existing) existing.remove();
+        
+        this.mirrorLayer = document.createElement('div');
+        this.mirrorLayer.id = 'realistic-mirror-overlay';
+        this.mirrorLayer.style.cssText = `
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 10000 !important;
+            pointer-events: auto !important;
+            background: 
+                radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.4) 0%, transparent 50%),
+                radial-gradient(circle at 70% 20%, rgba(200, 200, 255, 0.3) 0%, transparent 40%),
+                radial-gradient(circle at 20% 80%, rgba(255, 200, 255, 0.3) 0%, transparent 45%),
+                linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(240, 240, 255, 0.2)) !important;
+            backdrop-filter: blur(0.5px) !important;
+            box-shadow: inset 0 0 50px rgba(255, 255, 255, 0.1) !important;
+        `;
+        
+        document.body.appendChild(this.mirrorLayer);
+        console.log('🪞 Mirror layer created and appended');
+    }
+
+    generateVoronoiCells() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        
+        // ボロノイ図の中心点を生成（より均等に分散）
+        this.voronoiPoints = this.generateWellDistributedPoints(width, height);
+        
+        // 各セルを作成
+        this.voronoiPoints.forEach((point, index) => {
+            const cell = this.createMirrorCell(point, index, width, height);
+            this.cells.push(cell);
+            this.mirrorLayer.appendChild(cell.element);
+        });
+        
+        console.log(`🪞 Generated ${this.cells.length} mirror cells`);
+    }
+
+    generateWellDistributedPoints(width, height) {
+        const points = [];
+        const cols = 6; // 6列
+        const rows = 5; // 5行
+        const cellWidth = width / cols;
+        const cellHeight = height / rows;
+        
+        for (let row = 0; row < rows; row++) {
+            for (let col = 0; col < cols; col++) {
+                if (points.length >= this.totalCells) break;
+                
+                // グリッドベースの配置にランダム性を加える
+                const baseX = (col + 0.5) * cellWidth;
+                const baseY = (row + 0.5) * cellHeight;
+                
+                // ±30%のランダム変動
+                const offsetX = (Math.random() - 0.5) * cellWidth * 0.6;
+                const offsetY = (Math.random() - 0.5) * cellHeight * 0.6;
+                
+                points.push({
+                    x: Math.max(50, Math.min(width - 50, baseX + offsetX)),
+                    y: Math.max(50, Math.min(height - 50, baseY + offsetY)),
+                    id: points.length
+                });
+            }
+            if (points.length >= this.totalCells) break;
+        }
+        
+        return points;
+    }
+
+    createMirrorCell(centerPoint, index, screenWidth, screenHeight) {
+        // ボロノイセルの境界を簡易計算
+        const cellPath = this.calculateVoronoiCell(centerPoint, index, screenWidth, screenHeight);
+        
+        const cellElement = document.createElement('div');
+        cellElement.className = 'mirror-cell';
+        cellElement.dataset.cellId = index;
+        cellElement.style.cssText = `
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            cursor: pointer !important;
+            clip-path: ${cellPath} !important;
+            background: inherit !important;
+            transition: all 0.3s ease !important;
+            z-index: 10001 !important;
+        `;
+        
+        // デバッグ用の番号表示（控えめ）
+        const label = document.createElement('span');
+        label.style.cssText = `
+            position: absolute;
+            left: ${centerPoint.x}px;
+            top: ${centerPoint.y}px;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 10px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            pointer-events: none;
+            z-index: 10002;
+        `;
+        label.textContent = index + 1;
+        cellElement.appendChild(label);
+        
+        return {
+            element: cellElement,
+            centerPoint: centerPoint,
+            index: index,
+            isShattered: false,
+            path: cellPath
+        };
+    }
+
+    calculateVoronoiCell(point, index, width, height) {
+        // 実際のボロノイ図は複雑すぎるので、近似版を作成
+        const neighbors = this.voronoiPoints
+            .filter(p => p.id !== point.id)
+            .map(p => ({
+                ...p,
+                distance: Math.hypot(p.x - point.x, p.y - point.y)
+            }))
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 6); // 最も近い6つの点
+        
+        // 簡易的な多角形を生成
+        const angles = [];
+        neighbors.forEach(neighbor => {
+            const angle = Math.atan2(neighbor.y - point.y, neighbor.x - point.x);
+            angles.push(angle);
+        });
+        
+        // 角度でソート
+        angles.sort((a, b) => a - b);
+        
+        // 多角形の頂点を計算
+        const vertices = [];
+        const baseRadius = Math.min(width, height) / 8; // 基本半径
+        
+        angles.forEach((angle, i) => {
+            const nextAngle = angles[(i + 1) % angles.length];
+            const midAngle = (angle + nextAngle) / 2;
+            
+            // 半径にランダム変動を加える
+            const radius = baseRadius * (0.8 + Math.random() * 0.4);
+            
+            const x = point.x + Math.cos(midAngle) * radius;
+            const y = point.y + Math.sin(midAngle) * radius;
+            
+            // 画面境界内に制限
+            const clampedX = Math.max(0, Math.min(width, x));
+            const clampedY = Math.max(0, Math.min(height, y));
+            
+            vertices.push(`${clampedX}px ${clampedY}px`);
+        });
+        
+        return `polygon(${vertices.join(', ')})`;
+    }
+
+    animateCrackFormation() {
+        // ひび割れラインをSVGで描画
+        this.createCrackSVG();
+        
+        // シンプルな衝撃アニメーション
+        setTimeout(() => {
+            this.showImpactEffect();
+        }, 500);
+        
+        // ひび割れが徐々に現れる
+        setTimeout(() => {
+            this.revealCracks();
+        }, 800);
+        
+        // インタラクション開始
+        setTimeout(() => {
+            this.enableCellInteractions();
+        }, 1500);
+    }
+
+    createCrackSVG() {
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10002;
+            opacity: 0;
+        `;
+        
+        // ボロノイセル間の境界線を描画
+        this.drawVoronoiBoundaries(svg);
+        
+        this.crackLayer = svg;
+        this.mirrorLayer.appendChild(svg);
+    }
+
+    drawVoronoiBoundaries(svg) {
+        // 各セルの境界を白い線で描画
+        this.cells.forEach((cell, index) => {
+            // 隣接セルとの境界線を描画（簡略版）
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            
+            // 簡易的な境界線（実際のボロノイ図の境界線の近似）
+            const boundaryPath = this.generateBoundaryPath(cell, index);
+            
+            path.setAttribute('d', boundaryPath);
+            path.setAttribute('stroke', 'rgba(255, 255, 255, 0.8)');
+            path.setAttribute('stroke-width', '2');
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke-linecap', 'round');
+            
+            svg.appendChild(path);
+        });
+    }
+
+    generateBoundaryPath(cell, index) {
+        // 各セルの周囲に境界線を描画
+        const center = cell.centerPoint;
+        const radius = 100;
+        const segments = 8;
+        
+        let path = '';
+        for (let i = 0; i < segments; i++) {
+            const angle = (i / segments) * Math.PI * 2;
+            const x = center.x + Math.cos(angle) * radius * (0.7 + Math.random() * 0.6);
+            const y = center.y + Math.sin(angle) * radius * (0.7 + Math.random() * 0.6);
+            
+            if (i === 0) {
+                path += `M ${x} ${y}`;
+            } else {
+                path += ` L ${x} ${y}`;
+            }
+        }
+        path += ' Z';
+        
+        return path;
+    }
+
+    showImpactEffect() {
+        // 短い衝撃エフェクト
+        const impact = document.createElement('div');
+        impact.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.8), transparent);
+            z-index: 10003;
+            animation: impact-pulse 0.3s ease-out;
+        `;
+        
+        this.mirrorLayer.appendChild(impact);
+        
+        setTimeout(() => {
+            impact.remove();
+        }, 300);
+    }
+
+    revealCracks() {
+        if (this.crackLayer) {
+            this.crackLayer.style.transition = 'opacity 0.8s ease';
+            this.crackLayer.style.opacity = '1';
+        }
+    }
+
+    enableCellInteractions() {
+        this.cells.forEach(cell => {
+            cell.element.addEventListener('mouseenter', () => {
+                if (!cell.isShattered) {
+                    this.shatterCell(cell);
+                }
+            });
+            
+            // ホバー時の光る効果
+            cell.element.addEventListener('mouseover', () => {
+                if (!cell.isShattered) {
+                    cell.element.style.filter = 'brightness(1.3)';
+                }
+            });
+            
+            cell.element.addEventListener('mouseleave', () => {
+                if (!cell.isShattered) {
+                    cell.element.style.filter = 'brightness(1)';
+                }
+            });
+        });
+        
+        console.log('🪞 Cell interactions enabled');
+    }
+
+    shatterCell(cell) {
+        if (cell.isShattered) return;
+        
+        console.log(`🔨 Shattering mirror cell ${cell.index}`);
+        cell.isShattered = true;
+        this.shatteredCount++;
+        
+        // 落下アニメーション
+        this.animateCellFall(cell);
+        
+        // 背景露出
+        this.revealBackgroundBehind(cell);
+        
+        // 進行状況チェック
+        this.checkProgress();
+    }
+
+    animateCellFall(cell) {
+        const element = cell.element;
+        const fallDistance = window.innerHeight + 200;
+        const rotationDegrees = (Math.random() - 0.5) * 720;
+        const fallDuration = 1000 + Math.random() * 500;
+        
+        element.style.transition = `transform ${fallDuration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity ${fallDuration}ms ease`;
+        element.style.transform = `translateY(${fallDistance}px) rotate(${rotationDegrees}deg)`;
+        element.style.opacity = '0';
+        
+        setTimeout(() => {
+            if (element.parentNode) {
+                element.remove();
+            }
+        }, fallDuration);
+    }
+
+    revealBackgroundBehind(cell) {
+        // 崩れた部分に黒い背景を露出
+        const revealElement = document.createElement('div');
+        revealElement.style.cssText = `
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: linear-gradient(135deg, #000000, #1a0000, #330000) !important;
+            clip-path: ${cell.path} !important;
+            opacity: 0 !important;
+            transition: opacity 0.8s ease !important;
+            z-index: 9999 !important;
+            pointer-events: none !important;
+        `;
+        
+        this.mirrorLayer.appendChild(revealElement);
+        
+        setTimeout(() => {
+            revealElement.style.opacity = '1';
+        }, 200);
+    }
+
+    checkProgress() {
+        const progressPercentage = (this.shatteredCount / this.totalCells) * 100;
+        console.log(`🪞 Progress: ${this.shatteredCount}/${this.totalCells} (${progressPercentage.toFixed(1)}%)`);
+        
+        if (this.shatteredCount >= this.autoTriggerThreshold && !this.autoTriggered) {
+            this.autoTriggered = true;
+            console.log('🔥 Auto-trigger threshold reached! Starting chain reaction...');
+            this.triggerChainReaction();
+        }
+        
+        if (this.shatteredCount >= this.totalCells) {
+            this.completeShatter();
+        }
+    }
+
+    triggerChainReaction() {
+        const remainingCells = this.cells.filter(cell => !cell.isShattered);
+        
+        remainingCells.forEach((cell, index) => {
+            setTimeout(() => {
+                this.shatterCell(cell);
+            }, index * 200);
+        });
+    }
+
+    completeShatter() {
+        console.log('💀 All mirror cells shattered! Revealing complete truth...');
+        
+        setTimeout(() => {
+            if (this.mirrorLayer && this.mirrorLayer.parentNode) {
+                this.mirrorLayer.style.transition = 'opacity 1s ease';
+                this.mirrorLayer.style.opacity = '0';
+                
+                setTimeout(() => {
+                    this.mirrorLayer.remove();
+                }, 1000);
+            }
+            
+            this.veilMagic.completeTransformation();
+        }, 1000);
+    }
+}
+
 class MirrorShatterSystem {
     constructor(veilMagic) {
         this.veilMagic = veilMagic;
@@ -391,7 +838,7 @@ class VeilMagic {
         this.isRevealed = false;
         this.clickCount = 0;
         this.revealThreshold = 3; // 3回クリックで真実が露出
-        this.mirrorSystem = new MirrorShatterSystem(this);
+        this.realisticMirrorSystem = new RealisticMirrorSystem(this);
         this.init();
     }
 
@@ -476,14 +923,14 @@ class VeilMagic {
             this.createMessage("心の色が、嘘をついてる", "truth-revealed");
         }, 1000);
         
-        // 新しい鏡の破片システムを開始（デバッグ付き）
+        // 新しいリアル鏡システムを開始（デバッグ付き）
         setTimeout(() => {
-            console.log('🪞 Starting mirror shatter system...');
+            console.log('🪞 Starting realistic mirror system...');
             try {
-                this.mirrorSystem.createMirrorShatter();
-                console.log('🪞 Mirror system started successfully');
+                this.realisticMirrorSystem.createRealisticMirror();
+                console.log('🪞 Realistic mirror system started successfully');
             } catch (error) {
-                console.error('❌ Mirror system error:', error);
+                console.error('❌ Realistic mirror system error:', error);
                 // エラーの場合は従来の方式に戻す
                 this.fallbackToOldSystem();
             }
