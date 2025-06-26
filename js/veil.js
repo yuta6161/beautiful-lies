@@ -82,14 +82,24 @@ class VeilMagic {
         console.log('💀 Truth revealed: "Beautiful lies are crumbling..."');
         this.isRevealed = true;
         
+        // 劇的な画面フラッシュ効果
+        this.createScreenFlash();
+        
         // 真実を露出させるアニメーション
         this.createRevealAnimation();
         
         // CSSクラスを追加して視覚的変化
-        document.body.classList.add('truth-revealed');
+        setTimeout(() => {
+            document.body.classList.add('truth-revealed');
+        }, 500);
         
         // メッセージ表示
-        this.createMessage("心の色が、嘘をついてる", "truth-revealed");
+        setTimeout(() => {
+            this.createMessage("心の色が、嘘をついてる", "truth-revealed");
+        }, 1000);
+        
+        // 背景を強制的に黒に変更
+        this.forceBackgroundChange();
         
         // 音声効果（あれば）
         this.playSound('reveal');
@@ -462,6 +472,43 @@ class VeilMagic {
         }, 100);
         
         setTimeout(() => particle.remove(), 3000);
+    }
+
+    createScreenFlash() {
+        // 画面全体を白でフラッシュ
+        const flash = document.createElement('div');
+        flash.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 99999;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        `;
+        
+        document.body.appendChild(flash);
+        
+        setTimeout(() => {
+            flash.style.opacity = '0';
+            setTimeout(() => flash.remove(), 300);
+        }, 100);
+    }
+
+    forceBackgroundChange() {
+        // 背景を強制的に黒に変更
+        document.body.style.background = 'linear-gradient(135deg, #000000, #1a0000, #330000)';
+        document.body.style.backgroundAttachment = 'fixed';
+        
+        // すべてのセクションの背景も変更
+        const sections = document.querySelectorAll('.content-section');
+        sections.forEach(section => {
+            section.style.background = 'rgba(20, 20, 20, 0.95)';
+            section.style.border = '2px solid #ff6b6b';
+        });
     }
 
     playSound(type) {

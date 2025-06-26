@@ -4,9 +4,10 @@
 
 body.truth-revealed {
     font-family: 'Courier New', monospace;
-    background: linear-gradient(135deg, #2c2c2c, #1a1a1a, #0d0d0d);
-    color: #ff6b6b;
+    background: linear-gradient(135deg, #000000, #1a0000, #330000) !important;
+    color: #ff6b6b !important;
     animation: static-noise 0.1s infinite;
+    filter: contrast(1.5) !important;
 }
 
 /* グリッチノイズアニメーション */
@@ -51,10 +52,12 @@ body.truth-revealed .nav-link:hover {
 
 /* メインコンテンツの変化 */
 body.truth-revealed #main-content {
+    background: linear-gradient(45deg, #000000, #1a0000, #000000) !important;
     background-image: 
-        radial-gradient(circle at 20% 50%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 40% 80%, rgba(255, 107, 107, 0.1) 0%, transparent 50%);
+        radial-gradient(circle at 20% 50%, rgba(255, 107, 107, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(255, 107, 107, 0.3) 0%, transparent 50%),
+        repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255, 0, 0, 0.1) 2px, rgba(255, 0, 0, 0.1) 4px) !important;
 }
 
 /* ひび割れエフェクト */
@@ -97,19 +100,31 @@ body.truth-revealed #hidden-message {
 }
 
 body.truth-revealed #truth-title {
-    font-size: 2.5rem;
-    color: #ff6b6b;
+    font-size: 3rem;
+    color: #ff4757;
     text-shadow: 
-        2px 2px 0px #000,
-        0 0 10px #ff6b6b,
-        0 0 20px #ff6b6b,
-        0 0 30px #ff6b6b;
-    animation: title-flicker 1.5s infinite;
+        3px 3px 0px #000,
+        0 0 15px #ff4757,
+        0 0 30px #ff4757,
+        0 0 45px #ff4757;
+    animation: title-flicker 1.5s infinite, title-shake 0.2s infinite;
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    transform: scale(1.2);
 }
 
 @keyframes title-flicker {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.8; }
+}
+
+@keyframes title-shake {
+    0% { transform: scale(1.2) translateX(0); }
+    25% { transform: scale(1.2) translateX(-1px); }
+    50% { transform: scale(1.2) translateX(1px); }
+    75% { transform: scale(1.2) translateX(-1px); }
+    100% { transform: scale(1.2) translateX(0); }
 }
 
 body.truth-revealed #truth-subtitle {
