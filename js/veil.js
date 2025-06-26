@@ -394,15 +394,43 @@ class RealisticMirrorSystem {
         const subdivisionRegions = this.createSubdivisionRegions(width, height);
         regions.push(...subdivisionRegions);
         
-        // 各領域から実際の破片要素を作成
-        regions.forEach((region, index) => {
-            if (region.boundary && region.boundary.length >= 3) {
-                const fragment = this.createGeometricFragment(region, index);
-                this.fragments.push(fragment);
-                this.cells.push(fragment);
-                this.mirrorLayer.appendChild(fragment.element);
+        // 各領域から実際の破片要素を作成（改良版：重複排除＆サイズフィルタ）
+        const validFragments = [];
+        
+        // Step 1: 全領域をサイズでソート（大きい順）
+        const sortedRegions = regions.filter(region => region.boundary && region.boundary.length >= 3)
+            .map(region => ({
+                ...region,
+                area: this.calculateRegionArea(region.boundary)
+            }))
+            .sort((a, b) => b.area - a.area);
+        
+        console.log(`🔍 Processing ${sortedRegions.length} regions, sorted by size...`);
+        
+        sortedRegions.forEach((region, index) => {
+            // サイズフィルタ: 最小面積制限を強化
+            const minArea = (window.innerWidth * window.innerHeight) / 100; // 画面の1/100以上に変更
+            
+            if (region.area >= minArea) {
+                // 重複チェック: より厳密な距離ベース検査
+                if (!this.isRegionOverlapping(region, validFragments)) {
+                    const fragment = this.createGeometricFragment(region, validFragments.length);
+                    if (fragment && fragment.element) {
+                        validFragments.push(fragment);
+                        this.fragments.push(fragment);
+                        this.cells.push(fragment);
+                        this.mirrorLayer.appendChild(fragment.element);
+                        console.log(`✅ Fragment ${validFragments.length}: Area=${Math.round(region.area)}, Center=(${Math.round(region.centerX)}, ${Math.round(region.centerY)})`);
+                    }
+                } else {
+                    console.log(`❌ Fragment skipped: overlapping with existing fragment`);
+                }
+            } else {
+                console.log(`❌ Fragment skipped: too small (${Math.round(region.area)} < ${Math.round(minArea)})`);
             }
         });
+        
+        console.log(`🔍 Filtered: ${regions.length} → ${validFragments.length} valid fragments`);
     }
 
     createCenterRegion() {
@@ -570,6 +598,30 @@ class RealisticMirrorSystem {
         label.textContent = index + 1;
         cellElement.appendChild(label);
         
+        // 個別破片専用のホバーイベントハンドラを設定
+        cellElement.addEventListener('mouseenter', (e) => {
+            if (!cellElement.dataset.isShattered) {
+                console.log(`🖱️ Fragment ${index + 1} hovered`);
+                cellElement.style.filter = 'brightness(1.4) drop-shadow(0 0 10px rgba(255,255,255,0.8))';
+                cellElement.style.transform = 'scale(1.02)';
+            }
+        });
+        
+        cellElement.addEventListener('mouseleave', (e) => {
+            if (!cellElement.dataset.isShattered) {
+                cellElement.style.filter = '';
+                cellElement.style.transform = '';
+            }
+        });
+        
+        cellElement.addEventListener('click', (e) => {
+            e.stopPropagation(); // イベントの伝播を停止
+            if (!cellElement.dataset.isShattered) {
+                console.log(`💥 Fragment ${index + 1} clicked - starting fall animation`);
+                this.shatterSingleFragment(cellElement, index);
+            }
+        });
+        
         return {
             element: cellElement,
             index: index,
@@ -577,8 +629,96 @@ class RealisticMirrorSystem {
             path: clipPath,
             region: region,
             centerX: region.centerX,
-            centerY: region.centerY
+            centerY: region.centerY,
+            area: region.area || this.calculateRegionArea(region.boundary)
         };
+    }
+
+    calculateRegionArea(boundary) {
+        // 多角形の面積を計算（Shoelace formula）
+        if (boundary.length < 3) return 0;
+        
+        let area = 0;
+        for (let i = 0; i < boundary.length; i++) {
+            const current = boundary[i].replace('px', '').split(' ').map(Number);
+            const next = boundary[(i + 1) % boundary.length].replace('px', '').split(' ').map(Number);
+            area += current[0] * next[1] - next[0] * current[1];
+        }
+        return Math.abs(area) / 2;
+    }
+
+    isRegionOverlapping(region, existingFragments) {
+        // 改良版重複検出: より確実な距離＋面積チェック
+        if (existingFragments.length === 0) return false;
+        
+        const regionCenter = { x: region.centerX, y: region.centerY };
+        const regionRadius = Math.sqrt(region.area / Math.PI); // 面積から半径を推定
+        
+        for (const existing of existingFragments) {
+            const existingCenter = { x: existing.centerX, y: existing.centerY };
+            const existingRadius = Math.sqrt(existing.area / Math.PI);
+            
+            const distance = Math.hypot(
+                regionCenter.x - existingCenter.x,
+                regionCenter.y - existingCenter.y
+            );
+            
+            // 重複判定: 2つの円の半径の合計より距離が短い場合
+            const minSafeDistance = (regionRadius + existingRadius) * 1.3; // 30%の余裕
+            
+            if (distance < minSafeDistance) {
+                console.log(`🔍 Overlap detected: distance=${Math.round(distance)} < safe=${Math.round(minSafeDistance)}`);
+                return true; // 重複あり
+            }
+        }
+        
+        return false; // 重複なし
+    }
+    
+    shatterSingleFragment(fragmentElement, fragmentIndex) {
+        // 個別破片の崩落アニメーション（他に影響しない独立処理）
+        if (fragmentElement.dataset.isShattered === 'true') {
+            console.log(`⚠️ Fragment ${fragmentIndex + 1} already shattered`);
+            return;
+        }
+        
+        // 破片を破損状態にマーク
+        fragmentElement.dataset.isShattered = 'true';
+        
+        console.log(`💥 Shattering fragment ${fragmentIndex + 1} independently...`);
+        
+        // 落下アニメーション用のランダム要素
+        const fallDuration = 1000 + Math.random() * 500; // 1-1.5秒
+        const rotationSpeed = 180 + Math.random() * 360; // 180-540度回転
+        const horizontalDrift = (Math.random() - 0.5) * 100; // 左右への偏移
+        
+        // CSS変数でアニメーションを制御
+        fragmentElement.style.setProperty('--fall-duration', `${fallDuration}ms`);
+        fragmentElement.style.setProperty('--rotation-amount', `${rotationSpeed}deg`);
+        fragmentElement.style.setProperty('--horizontal-drift', `${horizontalDrift}px`);
+        
+        // 落下アニメーション適用
+        fragmentElement.style.animation = `
+            mirror-fragment-fall var(--fall-duration) ease-in forwards
+        `;
+        
+        // 破片カウンタを更新
+        this.shatteredCount++;
+        console.log(`📊 Shattered: ${this.shatteredCount}/${this.totalCells}`);
+        
+        // アニメーション完了後に要素を除去
+        setTimeout(() => {
+            if (fragmentElement && fragmentElement.parentNode) {
+                fragmentElement.remove();
+                console.log(`🗑️ Fragment ${fragmentIndex + 1} removed after fall`);
+            }
+            
+            // 自動発動チェック
+            if (this.shatteredCount >= this.autoTriggerThreshold) {
+                console.log(`🔥 Auto-trigger threshold reached! Revealing truth...`);
+                this.revealTruth();
+            }
+        }, fallDuration + 100);
     }
 
 

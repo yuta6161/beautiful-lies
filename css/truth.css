@@ -409,6 +409,30 @@ body.truth-revealed ::selection {
     }
 }
 
+/* 改良版: 個別破片用の落下アニメーション */
+@keyframes mirror-fragment-fall {
+    0% { 
+        transform: translateY(0) translateX(0) rotate(0deg) scale(1);
+        opacity: 1;
+        filter: brightness(1) blur(0px);
+    }
+    20% {
+        transform: translateY(20px) translateX(calc(var(--horizontal-drift) * 0.2)) rotate(calc(var(--rotation-amount) * 0.2)) scale(0.98);
+        opacity: 0.9;
+        filter: brightness(1.2) blur(0.5px);
+    }
+    50% {
+        transform: translateY(150px) translateX(calc(var(--horizontal-drift) * 0.6)) rotate(calc(var(--rotation-amount) * 0.6)) scale(0.8);
+        opacity: 0.7;
+        filter: brightness(0.8) blur(1px);
+    }
+    100% { 
+        transform: translateY(120vh) translateX(var(--horizontal-drift)) rotate(var(--rotation-amount)) scale(0.2);
+        opacity: 0;
+        filter: brightness(0.5) blur(3px);
+    }
+}
+
 /* 背景露出用 */
 .background-reveal {
     background: linear-gradient(135deg, #000000, #1a0000, #330000) !important;
