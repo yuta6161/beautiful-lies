@@ -86,181 +86,156 @@ class RealisticMirrorSystem {
         const width = window.innerWidth;
         const height = window.innerHeight;
         
-        // 現実的なひび割れパターンを生成
-        this.crackPaths = [];
-        this.allCrackLines = []; // 全てのひび割れライン（メイン＋枝分かれ）
+        // 完全連動型ひび割れシステム
+        this.crackLines = []; // 全ひび割れライン
+        this.fragments = []; // ひび割れで分割された実際の領域
         
-        // Step 1: 中央から放射状にメインひび割れを生成（8本程度）
-        const mainCracks = 8;
-        for (let i = 0; i < mainCracks; i++) {
-            const angle = (i / mainCracks) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
-            const mainCrack = this.generateMainCrackLine(angle, width, height);
-            this.allCrackLines.push(...mainCrack);
+        // Step 1: シンプルな放射状ひび割れ（完全連動のため簡略化）
+        const crackCount = this.totalCells; // 20本の放射状ひび割れ
+        
+        for (let i = 0; i < crackCount; i++) {
+            const angle = (i / crackCount) * Math.PI * 2;
+            const crackLine = this.generateSimpleCrackLine(angle, width, height);
+            this.crackLines.push(crackLine);
         }
         
-        // Step 2: メインひび割れから枝分かれする横ひび割れを生成
-        this.generateBranchCracks(width, height);
+        // Step 2: ひび割れラインで画面を実際に分割
+        this.divideByCracks(width, height);
         
-        // Step 3: ひび割れの交点から不規則な破片領域を計算
-        this.calculateIrregularFragments(width, height);
-        
-        console.log(`🪞 Generated realistic crack pattern: ${this.allCrackLines.length} crack lines, ${this.cells.length} irregular fragments`);
+        console.log(`🪞 Generated ${this.crackLines.length} crack lines with ${this.fragments.length} synchronized fragments`);
     }
 
-    generateMainCrackLine(angle, width, height) {
-        // メインひび割れライン（中央から外側に向かう）
-        const maxDistance = Math.sqrt(width * width + height * height) / 2;
-        const crackLines = [];
+    generateSimpleCrackLine(angle, width, height) {
+        // 中央から画面端まで一直線に伸びるシンプルなひび割れライン
+        const maxDistance = Math.sqrt(width * width + height * height);
         
-        // メインひび割れは中央から70-90%程度まで伸びる
-        const crackLength = maxDistance * (0.7 + Math.random() * 0.2);
-        const segments = 6 + Math.floor(Math.random() * 4); // 6-9セグメント
+        // 軽微な角度揺らぎ（±5度）
+        const angleVariation = (Math.random() - 0.5) * 0.087; // ±5度
+        const actualAngle = angle + angleVariation;
         
-        const points = [`${this.centerX} ${this.centerY}`];
+        const endX = this.centerX + Math.cos(actualAngle) * maxDistance;
+        const endY = this.centerY + Math.sin(actualAngle) * maxDistance;
         
-        for (let segment = 1; segment <= segments; segment++) {
-            const distance = (segment / segments) * crackLength;
-            
-            // 角度の揺らぎ（±10度）
-            const angleVariation = (Math.random() - 0.5) * 0.175;
-            const actualAngle = angle + angleVariation;
-            
-            // 距離の揺らぎ
-            const distanceVariation = 0.85 + Math.random() * 0.3;
-            const actualDistance = distance * distanceVariation;
-            
-            const x = this.centerX + Math.cos(actualAngle) * actualDistance;
-            const y = this.centerY + Math.sin(actualAngle) * actualDistance;
-            
-            const clampedX = Math.max(0, Math.min(width, x));
-            const clampedY = Math.max(0, Math.min(height, y));
-            
-            points.push(`${clampedX} ${clampedY}`);
-        }
-        
-        crackLines.push({
-            type: 'main',
-            points: points,
-            angle: angle
-        });
-        
-        return crackLines;
-    }
-
-    generateBranchCracks(width, height) {
-        // 既存のメインひび割れから枝分かれする横ひび割れを生成
-        const branchCount = 12 + Math.floor(Math.random() * 8); // 12-19本の枝分かれ
-        
-        for (let i = 0; i < branchCount; i++) {
-            // ランダムに2つのメインひび割れを選んで、その間を繋ぐ横ひび割れを作る
-            const crack1 = this.allCrackLines[Math.floor(Math.random() * this.allCrackLines.length)];
-            const crack2 = this.allCrackLines[Math.floor(Math.random() * this.allCrackLines.length)];
-            
-            if (crack1 !== crack2) {
-                const branchCrack = this.generateBranchBetweenCracks(crack1, crack2, width, height);
-                if (branchCrack) {
-                    this.allCrackLines.push(branchCrack);
-                }
-            }
-        }
-    }
-
-    generateBranchBetweenCracks(crack1, crack2, width, height) {
-        // 2つのひび割れの間を繋ぐ枝分かれひび割れを生成
-        if (!crack1.points || !crack2.points) return null;
-        
-        // ランダムに中間地点を選択
-        const point1Index = Math.floor(Math.random() * crack1.points.length);
-        const point2Index = Math.floor(Math.random() * crack2.points.length);
-        
-        const start = crack1.points[point1Index].split(' ').map(Number);
-        const end = crack2.points[point2Index].split(' ').map(Number);
-        
-        // 2点間を不規則に繋ぐ
-        const segments = 3 + Math.floor(Math.random() * 3); // 3-5セグメント
-        const points = [`${start[0]} ${start[1]}`];
-        
-        for (let i = 1; i < segments; i++) {
-            const t = i / segments;
-            const baseX = start[0] + (end[0] - start[0]) * t;
-            const baseY = start[1] + (end[1] - start[1]) * t;
-            
-            // 不規則性を追加
-            const deviation = 30 + Math.random() * 20;
-            const devAngle = Math.random() * Math.PI * 2;
-            const actualX = baseX + Math.cos(devAngle) * deviation;
-            const actualY = baseY + Math.sin(devAngle) * deviation;
-            
-            const clampedX = Math.max(0, Math.min(width, actualX));
-            const clampedY = Math.max(0, Math.min(height, actualY));
-            
-            points.push(`${clampedX} ${clampedY}`);
-        }
-        
-        points.push(`${end[0]} ${end[1]}`);
+        // 画面境界での終点を計算
+        const { x: boundaryX, y: boundaryY } = this.calculateBoundaryIntersection(
+            this.centerX, this.centerY, endX, endY, width, height
+        );
         
         return {
-            type: 'branch',
-            points: points
+            startX: this.centerX,
+            startY: this.centerY,
+            endX: boundaryX,
+            endY: boundaryY,
+            angle: actualAngle
         };
     }
 
-    calculateIrregularFragments(width, height) {
-        // ひび割れの交点から不規則な破片を計算（簡略版）
-        // 実際の実装では、より複雑な幾何学的計算が必要
+    calculateBoundaryIntersection(startX, startY, endX, endY, width, height) {
+        // 直線が画面境界と交差する点を計算
+        const dx = endX - startX;
+        const dy = endY - startY;
         
-        this.cells = [];
-        const fragmentCount = this.totalCells;
+        // 各境界との交点を計算
+        const intersections = [];
         
-        // 画面を大まかな領域に分割して、各領域に不規則な破片を作成
-        const gridCols = 5;
-        const gridRows = 4;
-        const cellWidth = width / gridCols;
-        const cellHeight = height / gridRows;
-        
-        let fragmentId = 0;
-        
-        for (let row = 0; row < gridRows && fragmentId < fragmentCount; row++) {
-            for (let col = 0; col < gridCols && fragmentId < fragmentCount; col++) {
-                const baseX = col * cellWidth;
-                const baseY = row * cellHeight;
-                
-                // 各グリッドセル内に不規則な破片を作成
-                const fragment = this.createIrregularFragment(
-                    baseX, baseY, cellWidth, cellHeight, fragmentId, width, height
-                );
-                
-                this.cells.push(fragment);
-                this.mirrorLayer.appendChild(fragment.element);
-                fragmentId++;
+        // 上端 (y = 0)
+        if (dy !== 0) {
+            const t = -startY / dy;
+            if (t > 0) {
+                const x = startX + dx * t;
+                if (x >= 0 && x <= width) {
+                    intersections.push({ x, y: 0, distance: t });
+                }
             }
         }
         
-        console.log(`🪞 Created ${this.cells.length} irregular fragments`);
+        // 下端 (y = height)
+        if (dy !== 0) {
+            const t = (height - startY) / dy;
+            if (t > 0) {
+                const x = startX + dx * t;
+                if (x >= 0 && x <= width) {
+                    intersections.push({ x, y: height, distance: t });
+                }
+            }
+        }
+        
+        // 左端 (x = 0)
+        if (dx !== 0) {
+            const t = -startX / dx;
+            if (t > 0) {
+                const y = startY + dy * t;
+                if (y >= 0 && y <= height) {
+                    intersections.push({ x: 0, y, distance: t });
+                }
+            }
+        }
+        
+        // 右端 (x = width)
+        if (dx !== 0) {
+            const t = (width - startX) / dx;
+            if (t > 0) {
+                const y = startY + dy * t;
+                if (y >= 0 && y <= height) {
+                    intersections.push({ x: width, y, distance: t });
+                }
+            }
+        }
+        
+        // 最も近い交点を返す
+        if (intersections.length > 0) {
+            const closest = intersections.reduce((min, curr) => 
+                curr.distance < min.distance ? curr : min
+            );
+            return { x: closest.x, y: closest.y };
+        }
+        
+        // 交点が見つからない場合はそのまま返す
+        return { x: endX, y: endY };
     }
 
-    createIrregularFragment(baseX, baseY, cellWidth, cellHeight, index, screenWidth, screenHeight) {
-        // 不規則な多角形破片を作成
-        const sides = 4 + Math.floor(Math.random() * 4); // 4-7角形
+    divideByCracks(width, height) {
+        // ひび割れラインで画面を実際に分割してフラグメントを作成
+        this.cells = [];
+        this.fragments = [];
+        
+        // 簡略版: 隣接する2つのひび割れラインの間を一つの破片とする
+        for (let i = 0; i < this.crackLines.length; i++) {
+            const currentCrack = this.crackLines[i];
+            const nextCrack = this.crackLines[(i + 1) % this.crackLines.length];
+            
+            const fragment = this.createFragmentBetweenCracks(
+                currentCrack, nextCrack, i, width, height
+            );
+            
+            this.fragments.push(fragment);
+            this.cells.push(fragment);
+            this.mirrorLayer.appendChild(fragment.element);
+        }
+        
+        console.log(`🪞 Created ${this.fragments.length} synchronized fragments`);
+    }
+
+    createFragmentBetweenCracks(crack1, crack2, index, width, height) {
+        // 2つのひび割れラインの間の扇形領域を作成
         const points = [];
         
-        // グリッドセル内でランダムな多角形を生成
-        for (let i = 0; i < sides; i++) {
-            const angle = (i / sides) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
-            const radiusX = cellWidth * (0.3 + Math.random() * 0.4);
-            const radiusY = cellHeight * (0.3 + Math.random() * 0.4);
-            
-            const centerX = baseX + cellWidth * (0.3 + Math.random() * 0.4);
-            const centerY = baseY + cellHeight * (0.3 + Math.random() * 0.4);
-            
-            const x = centerX + Math.cos(angle) * radiusX;
-            const y = centerY + Math.sin(angle) * radiusY;
-            
-            const clampedX = Math.max(0, Math.min(screenWidth, x));
-            const clampedY = Math.max(0, Math.min(screenHeight, y));
-            
-            points.push(`${clampedX}px ${clampedY}px`);
-        }
+        // 中央点から開始
+        points.push(`${this.centerX}px ${this.centerY}px`);
+        
+        // 最初のひび割れラインの終点まで
+        points.push(`${crack1.endX}px ${crack1.endY}px`);
+        
+        // 画面境界に沿って次のひび割れラインの終点まで
+        const arcPoints = this.generateArcBetweenPoints(
+            crack1.endX, crack1.endY, 
+            crack2.endX, crack2.endY, 
+            width, height
+        );
+        arcPoints.forEach(point => points.push(point));
+        
+        // 次のひび割れラインの終点
+        points.push(`${crack2.endX}px ${crack2.endY}px`);
         
         const clipPath = `polygon(${points.join(', ')})`;
         
@@ -282,15 +257,18 @@ class RealisticMirrorSystem {
         
         // デバッグ用の番号表示
         const label = document.createElement('span');
+        const labelX = (crack1.endX + crack2.endX + this.centerX) / 3;
+        const labelY = (crack1.endY + crack2.endY + this.centerY) / 3;
+        
         label.style.cssText = `
             position: absolute;
-            left: ${baseX + cellWidth/2}px;
-            top: ${baseY + cellHeight/2}px;
+            left: ${labelX}px;
+            top: ${labelY}px;
             transform: translate(-50%, -50%);
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
             font-weight: bold;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
             pointer-events: none;
             z-index: 10002;
         `;
@@ -302,9 +280,36 @@ class RealisticMirrorSystem {
             index: index,
             isShattered: false,
             path: clipPath,
-            baseX: baseX + cellWidth/2,
-            baseY: baseY + cellHeight/2
+            crack1: crack1,
+            crack2: crack2
         };
+    }
+
+    generateArcBetweenPoints(x1, y1, x2, y2, width, height) {
+        // 2点間を画面境界に沿って繋ぐ弧状の経路を生成
+        const points = [];
+        const segments = 3; // 中間点の数
+        
+        // 簡略化: 直線補間（実際には境界に沿った曲線が理想）
+        for (let i = 1; i <= segments; i++) {
+            const t = i / (segments + 1);
+            const x = x1 + (x2 - x1) * t;
+            const y = y1 + (y2 - y1) * t;
+            
+            // 境界に押し付ける
+            let boundaryX = x;
+            let boundaryY = y;
+            
+            // 画面境界にクランプ
+            if (x <= 0) boundaryX = 0;
+            else if (x >= width) boundaryX = width;
+            if (y <= 0) boundaryY = 0;
+            else if (y >= height) boundaryY = height;
+            
+            points.push(`${boundaryX}px ${boundaryY}px`);
+        }
+        
+        return points;
     }
 
 
@@ -351,36 +356,24 @@ class RealisticMirrorSystem {
     }
 
     drawRadialCracks(svg) {
-        // 全てのひび割れライン（メイン＋枝分かれ）を白い線でSVGに描画
-        this.allCrackLines.forEach((crack, index) => {
+        // 同じひび割れラインデータでSVGを描画（完全連動）
+        this.crackLines.forEach((crack, index) => {
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             
-            // SVGパス形式に変換
-            let pathData = `M ${crack.points[0]}`;
-            for (let i = 1; i < crack.points.length; i++) {
-                pathData += ` L ${crack.points[i]}`;
-            }
+            // SVGパス形式に変換（中央から境界まで）
+            const pathData = `M ${crack.startX} ${crack.startY} L ${crack.endX} ${crack.endY}`;
             
             path.setAttribute('d', pathData);
-            
-            // メインひび割れと枝分かれひび割れで線の太さを変える
-            if (crack.type === 'main') {
-                path.setAttribute('stroke', 'rgba(255, 255, 255, 0.9)');
-                path.setAttribute('stroke-width', '2.5');
-            } else {
-                path.setAttribute('stroke', 'rgba(255, 255, 255, 0.7)');
-                path.setAttribute('stroke-width', '1.5');
-            }
-            
+            path.setAttribute('stroke', 'rgba(255, 255, 255, 0.9)');
+            path.setAttribute('stroke-width', '2');
             path.setAttribute('fill', 'none');
             path.setAttribute('stroke-linecap', 'round');
-            path.setAttribute('stroke-linejoin', 'round');
             path.setAttribute('opacity', '0');
             
             svg.appendChild(path);
         });
         
-        console.log(`🪞 Drew ${this.allCrackLines.length} realistic crack lines (main + branches)`);
+        console.log(`🪞 Drew ${this.crackLines.length} synchronized crack lines`);
     }
 
 
