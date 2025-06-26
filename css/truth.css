@@ -1,0 +1,334 @@
+/* Truth - 醜い真実のスタイル */
+
+/* Beautiful.cssの美しさを上書きして、醜い真実を露出させる */
+
+body.truth-revealed {
+    font-family: 'Courier New', monospace;
+    background: linear-gradient(135deg, #2c2c2c, #1a1a1a, #0d0d0d);
+    color: #ff6b6b;
+    animation: static-noise 0.1s infinite;
+}
+
+/* グリッチノイズアニメーション */
+@keyframes static-noise {
+    0% { filter: hue-rotate(0deg) contrast(1); }
+    20% { filter: hue-rotate(90deg) contrast(1.2); }
+    40% { filter: hue-rotate(180deg) contrast(0.8); }
+    60% { filter: hue-rotate(270deg) contrast(1.1); }
+    80% { filter: hue-rotate(360deg) contrast(0.9); }
+    100% { filter: hue-rotate(0deg) contrast(1); }
+}
+
+/* ヘッダーの変化 */
+body.truth-revealed #main-header {
+    background: rgba(20, 20, 20, 0.95);
+    border-bottom: 1px solid #ff6b6b;
+    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
+}
+
+body.truth-revealed .nav-link {
+    color: #ff6b6b;
+    background: linear-gradient(45deg, transparent, rgba(255, 107, 107, 0.1));
+    border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+body.truth-revealed .nav-link:hover {
+    background: linear-gradient(45deg, #ff6b6b, #ff4757);
+    color: #000;
+    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.6);
+    animation: glitch-text 0.3s infinite;
+}
+
+/* グリッチテキストエフェクト */
+@keyframes glitch-text {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(-2px) skew(-2deg); }
+    40% { transform: translateX(2px) skew(2deg); }
+    60% { transform: translateX(-1px) skew(-1deg); }
+    80% { transform: translateX(1px) skew(1deg); }
+    100% { transform: translateX(0); }
+}
+
+/* メインコンテンツの変化 */
+body.truth-revealed #main-content {
+    background-image: 
+        radial-gradient(circle at 20% 50%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(255, 107, 107, 0.1) 0%, transparent 50%);
+}
+
+/* ひび割れエフェクト */
+body.truth-revealed #hero-section {
+    background: 
+        linear-gradient(45deg, transparent 48%, #ff6b6b 48%, #ff6b6b 52%, transparent 52%),
+        linear-gradient(-45deg, transparent 48%, #ff6b6b 48%, #ff6b6b 52%, transparent 52%),
+        radial-gradient(circle, rgba(0,0,0,0.8), rgba(0,0,0,0.9));
+    background-size: 10px 10px, 10px 10px, 100% 100%;
+    position: relative;
+}
+
+/* Veilの画像変化 */
+body.truth-revealed #veil-main-image {
+    border: 3px solid #ff6b6b;
+    box-shadow: 
+        0 0 20px rgba(255, 107, 107, 0.8),
+        inset 0 0 20px rgba(0, 0, 0, 0.8);
+    filter: contrast(1.3) saturate(0.3) hue-rotate(180deg);
+    animation: image-glitch 2s infinite;
+}
+
+@keyframes image-glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+    100% { transform: translate(0); }
+}
+
+/* タイトルの変化 */
+body.truth-revealed #title-container {
+    display: none;
+}
+
+body.truth-revealed #hidden-message {
+    display: block !important;
+    opacity: 1;
+}
+
+body.truth-revealed #truth-title {
+    font-size: 2.5rem;
+    color: #ff6b6b;
+    text-shadow: 
+        2px 2px 0px #000,
+        0 0 10px #ff6b6b,
+        0 0 20px #ff6b6b,
+        0 0 30px #ff6b6b;
+    animation: title-flicker 1.5s infinite;
+}
+
+@keyframes title-flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+body.truth-revealed #truth-subtitle {
+    color: #999;
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 1rem;
+}
+
+/* コンテンツセクションの変化 */
+body.truth-revealed .content-section {
+    background: rgba(20, 20, 20, 0.9);
+    border: 1px solid #ff6b6b;
+    box-shadow: 
+        0 0 20px rgba(255, 107, 107, 0.3),
+        inset 0 0 20px rgba(0, 0, 0, 0.8);
+    border-radius: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+body.truth-revealed .content-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(255, 107, 107, 0.03) 2px,
+            rgba(255, 107, 107, 0.03) 4px
+        );
+    pointer-events: none;
+}
+
+body.truth-revealed .section-title {
+    color: #ff6b6b;
+    border-bottom: 2px solid #ff6b6b;
+    text-shadow: 0 0 10px #ff6b6b;
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+}
+
+body.truth-revealed .content-text {
+    color: #ccc;
+    font-family: 'Courier New', monospace;
+    line-height: 1.4;
+}
+
+/* 真実のコンテンツを表示 */
+body.truth-revealed .truth-content {
+    display: block !important;
+    color: #ff6b6b;
+    border: 1px solid #ff6b6b;
+    padding: 1rem;
+    margin-top: 1rem;
+    background: rgba(255, 107, 107, 0.1);
+    animation: content-flicker 3s infinite;
+}
+
+@keyframes content-flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* ギャラリーの変化 */
+body.truth-revealed .gallery-item {
+    background: #1a1a1a;
+    border: 1px solid #ff6b6b;
+    box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+    transform: rotate(-1deg);
+}
+
+body.truth-revealed .gallery-item:hover {
+    transform: rotate(1deg) scale(1.02);
+    box-shadow: 0 0 25px rgba(255, 107, 107, 0.8);
+}
+
+body.truth-revealed .gallery-item::after {
+    content: 'CORRUPTED';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ff6b6b;
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-shadow: 0 0 10px #ff6b6b;
+    z-index: 10;
+}
+
+/* 引用の変化 */
+body.truth-revealed .quote-item {
+    background: rgba(20, 20, 20, 0.9);
+    border-left: 4px solid #ff6b6b;
+    box-shadow: 0 0 15px rgba(255, 107, 107, 0.3);
+}
+
+body.truth-revealed .quote-item:hover {
+    transform: translateX(-10px);
+    box-shadow: 0 0 25px rgba(255, 107, 107, 0.6);
+}
+
+body.truth-revealed .quote-item p {
+    color: #ff6b6b;
+    font-family: 'Courier New', monospace;
+}
+
+body.truth-revealed .main-quote {
+    background: rgba(255, 107, 107, 0.2);
+    border-left-color: #ff4757;
+    animation: main-quote-pulse 2s infinite;
+}
+
+@keyframes main-quote-pulse {
+    0%, 100% { 
+        box-shadow: 0 0 15px rgba(255, 107, 107, 0.3);
+    }
+    50% { 
+        box-shadow: 0 0 30px rgba(255, 107, 107, 0.8);
+    }
+}
+
+body.truth-revealed .main-quote p {
+    color: #ff4757;
+    font-size: 1.8rem;
+    text-shadow: 0 0 10px #ff4757;
+}
+
+/* フッターの変化 */
+body.truth-revealed #main-footer {
+    background: rgba(10, 10, 10, 0.9);
+    border-top: 1px solid #ff6b6b;
+    color: #ff6b6b;
+}
+
+/* ひび割れオーバーレイ */
+body.truth-revealed #crack-overlay {
+    display: block !important;
+    opacity: 0.3;
+    background: 
+        linear-gradient(45deg, transparent 40%, #ff6b6b 40%, #ff6b6b 60%, transparent 60%),
+        linear-gradient(-45deg, transparent 40%, #ff6b6b 40%, #ff6b6b 60%, transparent 60%);
+    background-size: 20px 20px;
+    animation: crack-spread 0.5s ease-out;
+}
+
+@keyframes crack-spread {
+    0% { 
+        background-size: 0px 0px;
+        opacity: 0;
+    }
+    100% { 
+        background-size: 20px 20px;
+        opacity: 0.3;
+    }
+}
+
+/* グリッチオーバーレイ */
+body.truth-revealed #glitch-overlay {
+    display: block !important;
+    opacity: 0.1;
+    background: 
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 1px,
+            #ff6b6b 1px,
+            #ff6b6b 2px
+        );
+    animation: glitch-lines 0.1s infinite;
+}
+
+@keyframes glitch-lines {
+    0% { transform: translateX(0px); }
+    25% { transform: translateX(1px); }
+    50% { transform: translateX(-1px); }
+    75% { transform: translateX(1px); }
+    100% { transform: translateX(0px); }
+}
+
+/* スクロールバーの変化 */
+body.truth-revealed::-webkit-scrollbar {
+    width: 12px;
+}
+
+body.truth-revealed::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+body.truth-revealed::-webkit-scrollbar-thumb {
+    background: #ff6b6b;
+    border-radius: 6px;
+}
+
+body.truth-revealed::-webkit-scrollbar-thumb:hover {
+    background: #ff4757;
+}
+
+/* 選択テキストの変化 */
+body.truth-revealed ::selection {
+    background: #ff6b6b;
+    color: #000;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+    body.truth-revealed #truth-title {
+        font-size: 1.8rem;
+    }
+    
+    body.truth-revealed .main-quote p {
+        font-size: 1.4rem;
+    }
+}
