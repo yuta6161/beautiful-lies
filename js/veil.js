@@ -111,37 +111,51 @@ class MirrorShatterSystem {
     }
 
     createShard(centerPoint, index, screenWidth, screenHeight) {
-        // 簡易的な円形鏡面（デバッグ用）
-        const radius = 80 + Math.random() * 40; // 80-120px
+        // 不規則な多角形鏡面（より鏡らしく）
+        const shardPath = this.calculateShardPath(centerPoint, index, screenWidth, screenHeight);
+        const shardSize = 160 + Math.random() * 80; // サイズを大きく
         
         const shardElement = document.createElement('div');
         shardElement.className = 'mirror-shard';
         shardElement.dataset.shardId = index;
         shardElement.style.cssText = `
             position: absolute !important;
-            left: ${centerPoint.x - radius}px !important;
-            top: ${centerPoint.y - radius}px !important;
-            width: ${radius * 2}px !important;
-            height: ${radius * 2}px !important;
-            border-radius: 50% !important;
+            left: ${centerPoint.x - shardSize/2}px !important;
+            top: ${centerPoint.y - shardSize/2}px !important;
+            width: ${shardSize}px !important;
+            height: ${shardSize}px !important;
             cursor: pointer !important;
             transition: all 0.3s ease !important;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1)) !important;
-            border: 2px solid rgba(255, 255, 255, 0.6) !important;
-            backdrop-filter: blur(2px) !important;
+            clip-path: ${shardPath} !important;
+            background: 
+                radial-gradient(circle at 50% 50%, 
+                rgba(255, 255, 255, 0.6) 0%, 
+                rgba(255, 255, 255, 0.3) 30%, 
+                rgba(200, 200, 255, 0.2) 60%,
+                rgba(255, 200, 255, 0.1) 100%),
+                linear-gradient(${Math.random() * 360}deg, 
+                rgba(255, 255, 255, 0.3), 
+                rgba(200, 200, 255, 0.2),
+                rgba(255, 200, 255, 0.2)) !important;
+            backdrop-filter: blur(1px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.8) !important;
+            box-shadow: 
+                inset 0 0 20px rgba(255, 255, 255, 0.3),
+                0 0 10px rgba(255, 255, 255, 0.2) !important;
             z-index: 10001 !important;
         `;
         
-        // デバッグ用の番号表示
+        // より控えめな番号表示（鏡らしさを保つため）
         shardElement.innerHTML = `<span style="
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            color: white;
+            color: rgba(255, 255, 255, 0.7);
             font-weight: bold;
-            font-size: 14px;
-            text-shadow: 1px 1px 2px black;
+            font-size: 12px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            opacity: 0.8;
         ">${index + 1}</span>`;
         
         return {
@@ -149,29 +163,38 @@ class MirrorShatterSystem {
             centerPoint: centerPoint,
             index: index,
             isShattered: false,
-            radius: radius
+            path: shardPath,
+            size: shardSize
         };
     }
 
     calculateShardPath(center, index, width, height) {
-        // 簡易的な多角形を生成（実際のボロノイ図は複雑すぎるため）
-        const sides = 6 + Math.floor(Math.random() * 4); // 6-9角形
-        const radius = 80 + Math.random() * 120; // ランダムなサイズ
+        // より鏡らしい不規則な多角形を生成
+        const sides = 5 + Math.floor(Math.random() * 4); // 5-8角形（より鏡らしく）
+        const baseRadius = 60 + Math.random() * 40; // 基本半径
         const angleOffset = Math.random() * Math.PI * 2;
         
         let pathPoints = [];
         
         for (let i = 0; i < sides; i++) {
             const angle = (i / sides) * Math.PI * 2 + angleOffset;
-            const variance = 0.7 + Math.random() * 0.6; // 不規則性
-            const x = center.x + Math.cos(angle) * radius * variance;
-            const y = center.y + Math.sin(angle) * radius * variance;
             
-            // 画面境界内に制限
-            const clampedX = Math.max(0, Math.min(width, x));
-            const clampedY = Math.max(0, Math.min(height, y));
+            // より激しい不規則性を追加（鏡の破片らしく）
+            const radiusVariance = 0.5 + Math.random() * 1.0;
+            const angleVariance = (Math.random() - 0.5) * 0.3; // 角度にも揺らぎ
             
-            pathPoints.push(`${clampedX}px ${clampedY}px`);
+            const actualAngle = angle + angleVariance;
+            const actualRadius = baseRadius * radiusVariance;
+            
+            // 中心からの相対座標で計算（clipPathなので50%基準）
+            const x = 50 + (Math.cos(actualAngle) * actualRadius / 160 * 50); // 160pxを基準に%変換
+            const y = 50 + (Math.sin(actualAngle) * actualRadius / 160 * 50);
+            
+            // 0-100%の範囲に制限
+            const clampedX = Math.max(5, Math.min(95, x));
+            const clampedY = Math.max(5, Math.min(95, y));
+            
+            pathPoints.push(`${clampedX}% ${clampedY}%`);
         }
         
         return `polygon(${pathPoints.join(', ')})`;
@@ -185,29 +208,40 @@ class MirrorShatterSystem {
                 }
             });
             
-            // ホバー時の光る効果
+            // ホバー時の光る効果（多角形用）
             shard.element.addEventListener('mouseover', () => {
                 if (!shard.isShattered) {
                     shard.element.style.background = `
-                        radial-gradient(circle at ${shard.centerPoint.x}px ${shard.centerPoint.y}px, 
-                        rgba(255, 255, 255, 0.6) 0%, 
-                        rgba(255, 255, 255, 0.2) 50%, 
-                        transparent 100%),
-                        linear-gradient(45deg, 
-                        rgba(255, 200, 200, 0.3), 
+                        radial-gradient(circle at 50% 50%, 
+                        rgba(255, 255, 255, 0.8) 0%, 
+                        rgba(255, 255, 255, 0.5) 30%, 
+                        rgba(255, 200, 200, 0.4) 60%,
+                        rgba(200, 200, 255, 0.3) 100%),
+                        linear-gradient(${Math.random() * 360}deg, 
+                        rgba(255, 255, 255, 0.4), 
+                        rgba(255, 200, 200, 0.3),
                         rgba(200, 200, 255, 0.3))
                     `;
+                    shard.element.style.transform = 'scale(1.05)';
+                    shard.element.style.filter = 'brightness(1.2)';
                 }
             });
             
             shard.element.addEventListener('mouseleave', () => {
                 if (!shard.isShattered) {
                     shard.element.style.background = `
-                        radial-gradient(circle at ${shard.centerPoint.x}px ${shard.centerPoint.y}px, 
-                        rgba(255, 255, 255, 0.3) 0%, 
-                        rgba(255, 255, 255, 0.1) 50%, 
-                        transparent 100%)
+                        radial-gradient(circle at 50% 50%, 
+                        rgba(255, 255, 255, 0.6) 0%, 
+                        rgba(255, 255, 255, 0.3) 30%, 
+                        rgba(200, 200, 255, 0.2) 60%,
+                        rgba(255, 200, 255, 0.1) 100%),
+                        linear-gradient(${Math.random() * 360}deg, 
+                        rgba(255, 255, 255, 0.3), 
+                        rgba(200, 200, 255, 0.2),
+                        rgba(255, 200, 255, 0.2))
                     `;
+                    shard.element.style.transform = 'scale(1)';
+                    shard.element.style.filter = 'brightness(1)';
                 }
             });
         });
@@ -256,16 +290,17 @@ class MirrorShatterSystem {
         // 崩れた部分に黒い背景を露出させる
         const revealElement = document.createElement('div');
         revealElement.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #000000, #1a0000, #330000);
-            clip-path: ${shard.path};
-            opacity: 0;
-            transition: opacity 0.5s ease;
-            z-index: -1;
+            position: absolute !important;
+            left: ${shard.centerPoint.x - shard.size/2}px !important;
+            top: ${shard.centerPoint.y - shard.size/2}px !important;
+            width: ${shard.size}px !important;
+            height: ${shard.size}px !important;
+            background: linear-gradient(135deg, #000000, #1a0000, #330000) !important;
+            clip-path: ${shard.path} !important;
+            opacity: 0 !important;
+            transition: opacity 0.8s ease !important;
+            z-index: 9999 !important;
+            pointer-events: none !important;
         `;
         
         this.shatterContainer.appendChild(revealElement);
@@ -273,7 +308,7 @@ class MirrorShatterSystem {
         // 徐々に背景を表示
         setTimeout(() => {
             revealElement.style.opacity = '1';
-        }, 100);
+        }, 200);
     }
 
     checkProgress() {
