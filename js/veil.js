@@ -408,8 +408,8 @@ class RealisticMirrorSystem {
         console.log(`🔍 Processing ${sortedRegions.length} regions, sorted by size...`);
         
         sortedRegions.forEach((region, index) => {
-            // サイズフィルタ: 最小面積制限を強化
-            const minArea = (window.innerWidth * window.innerHeight) / 100; // 画面の1/100以上に変更
+            // サイズフィルタ: 適切な最小面積制限
+            const minArea = (window.innerWidth * window.innerHeight) / 400; // 画面の1/400に調整
             
             if (region.area >= minArea) {
                 // 重複チェック: より厳密な距離ベース検査
@@ -431,6 +431,12 @@ class RealisticMirrorSystem {
         });
         
         console.log(`🔍 Filtered: ${regions.length} → ${validFragments.length} valid fragments`);
+        
+        // 緊急フォールバック: 破片が1個も作られなかった場合
+        if (validFragments.length === 0) {
+            console.log(`⚠️ No fragments created! Creating emergency fallback fragments...`);
+            this.createEmergencyFragments(width, height);
+        }
     }
 
     createCenterRegion() {
@@ -664,7 +670,7 @@ class RealisticMirrorSystem {
             );
             
             // 重複判定: 2つの円の半径の合計より距離が短い場合
-            const minSafeDistance = (regionRadius + existingRadius) * 1.3; // 30%の余裕
+            const minSafeDistance = (regionRadius + existingRadius) * 0.8; // 20%重複許可で破片数確保
             
             if (distance < minSafeDistance) {
                 console.log(`🔍 Overlap detected: distance=${Math.round(distance)} < safe=${Math.round(minSafeDistance)}`);
@@ -719,6 +725,48 @@ class RealisticMirrorSystem {
                 this.revealTruth();
             }
         }, fallDuration + 100);
+    }
+    
+    createEmergencyFragments(width, height) {
+        // 緊急時用の簡単な破片システム
+        console.log(`🚨 Creating emergency fragments...`);
+        
+        const emergencyFragments = [];
+        const fragmentCount = 12;
+        
+        for (let i = 0; i < fragmentCount; i++) {
+            const angle = (i / fragmentCount) * Math.PI * 2;
+            const distance = 100 + Math.random() * 200;
+            const centerX = this.centerX + Math.cos(angle) * distance;
+            const centerY = this.centerY + Math.sin(angle) * distance;
+            
+            // 簡単な四角形破片
+            const size = 60 + Math.random() * 40;
+            const boundary = [
+                `${centerX - size}px ${centerY - size}px`,
+                `${centerX + size}px ${centerY - size}px`,
+                `${centerX + size}px ${centerY + size}px`,
+                `${centerX - size}px ${centerY + size}px`
+            ];
+            
+            const region = {
+                type: 'emergency',
+                boundary: boundary,
+                centerX: centerX,
+                centerY: centerY,
+                area: size * size * 4
+            };
+            
+            const fragment = this.createGeometricFragment(region, i);
+            if (fragment && fragment.element) {
+                emergencyFragments.push(fragment);
+                this.fragments.push(fragment);
+                this.cells.push(fragment);
+                this.mirrorLayer.appendChild(fragment.element);
+            }
+        }
+        
+        console.log(`🆘 Emergency fragments created: ${emergencyFragments.length}`);
     }
 
 
