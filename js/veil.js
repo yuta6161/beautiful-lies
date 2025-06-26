@@ -13,22 +13,37 @@ class MirrorShatterSystem {
     }
 
     createMirrorShatter() {
-        if (this.isShattered) return;
+        if (this.isShattered) {
+            console.log('🪞 Mirror already shattered, skipping...');
+            return;
+        }
         
         console.log('🪞 Creating mirror shatter effect...');
         this.isShattered = true;
         
-        // コンテナを作成
-        this.createShatterContainer();
-        
-        // ボロノイ図で20個の鏡面を生成
-        this.generateVoronoiShards();
-        
-        // 各鏡面にイベントリスナーを追加
-        this.addShardInteractions();
-        
-        // 鏡の割れる音効果
-        this.playShatterSound();
+        try {
+            // コンテナを作成
+            console.log('🪞 Step 1: Creating shatter container...');
+            this.createShatterContainer();
+            
+            // ボロノイ図で20個の鏡面を生成
+            console.log('🪞 Step 2: Generating 20 voronoi shards...');
+            this.generateVoronoiShards();
+            
+            // 各鏡面にイベントリスナーを追加
+            console.log('🪞 Step 3: Adding shard interactions...');
+            this.addShardInteractions();
+            
+            // 鏡の割れる音効果
+            console.log('🪞 Step 4: Playing shatter sound...');
+            this.playShatterSound();
+            
+            console.log('🪞 ✅ Mirror shatter system fully initialized!');
+            console.log(`🪞 Total shards created: ${this.shards.length}`);
+        } catch (error) {
+            console.error('❌ Error in createMirrorShatter:', error);
+            throw error;
+        }
     }
 
     createShatterContainer() {
@@ -396,13 +411,26 @@ class VeilMagic {
             this.createMessage("心の色が、嘘をついてる", "truth-revealed");
         }, 1000);
         
-        // 新しい鏡の破片システムを開始
+        // 新しい鏡の破片システムを開始（デバッグ付き）
         setTimeout(() => {
-            this.mirrorSystem.createMirrorShatter();
+            console.log('🪞 Starting mirror shatter system...');
+            try {
+                this.mirrorSystem.createMirrorShatter();
+                console.log('🪞 Mirror system started successfully');
+            } catch (error) {
+                console.error('❌ Mirror system error:', error);
+                // エラーの場合は従来の方式に戻す
+                this.fallbackToOldSystem();
+            }
         }, 1500);
         
         // 音声効果（あれば）
         this.playSound('reveal');
+    }
+
+    fallbackToOldSystem() {
+        console.log('🔄 Falling back to old transformation system');
+        this.completeTransformation();
     }
 
     completeTransformation() {
@@ -956,6 +984,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // デバッグ用のグローバル関数
     window.revealTruth = () => window.veilMagic.forceReveal();
     window.veilMessage = (text) => window.veilMagic.createMessage(text, 'special');
+    
+    // 鏡システムのテスト用関数
+    window.testMirrorSystem = () => {
+        console.log('🧪 Testing mirror system...');
+        try {
+            window.veilMagic.mirrorSystem.createMirrorShatter();
+        } catch (error) {
+            console.error('❌ Mirror test failed:', error);
+        }
+    };
+    
+    console.log('🎭 VeilMagic initialized successfully!');
+    console.log('🔧 Debug commands: revealTruth(), testMirrorSystem(), veilMessage("text")');
 });
 
 // コンソールアート
