@@ -359,6 +359,62 @@ body.truth-revealed ::selection {
     color: #000;
 }
 
+/* 鏡の破片システム用スタイル */
+#mirror-shatter-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 10000 !important;
+    pointer-events: auto !important;
+}
+
+.mirror-shard {
+    transition: all 0.3s ease !important;
+    cursor: pointer !important;
+}
+
+.mirror-shard:hover {
+    filter: brightness(1.3) !important;
+    backdrop-filter: blur(2px) !important;
+}
+
+/* 鏡面の光る効果 */
+@keyframes mirror-shimmer {
+    0% { 
+        box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+    50% { 
+        box-shadow: inset 0 0 40px rgba(255, 255, 255, 0.6);
+    }
+    100% { 
+        box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+}
+
+.mirror-shard:hover {
+    animation: mirror-shimmer 0.5s ease-in-out !important;
+}
+
+/* 崩れ落ちアニメーション用 */
+@keyframes shard-fall {
+    0% { 
+        transform: translateY(0) rotate(0deg) scale(1);
+        opacity: 1;
+    }
+    100% { 
+        transform: translateY(100vh) rotate(360deg) scale(0.3);
+        opacity: 0;
+    }
+}
+
+/* 背景露出用 */
+.background-reveal {
+    background: linear-gradient(135deg, #000000, #1a0000, #330000) !important;
+    transition: opacity 0.5s ease !important;
+}
+
 /* レスポンシブデザイン */
 @media (max-width: 768px) {
     body.truth-revealed #truth-title {
@@ -367,5 +423,11 @@ body.truth-revealed ::selection {
     
     body.truth-revealed .main-quote p {
         font-size: 1.4rem;
+    }
+    
+    /* モバイルでは鏡面を少し大きく */
+    .mirror-shard {
+        min-width: 60px !important;
+        min-height: 60px !important;
     }
 }

@@ -1,11 +1,317 @@
 // Veil's Interactive Magic - 美しい嘘から醜い真実への変化を制御
 // "心の色が、嘘をついてる"
 
+class MirrorShatterSystem {
+    constructor(veilMagic) {
+        this.veilMagic = veilMagic;
+        this.shards = [];
+        this.shatteredCount = 0;
+        this.totalShards = 20;
+        this.autoTriggerThreshold = Math.floor(this.totalShards * 0.6); // 60%で自動発動
+        this.isShattered = false;
+        this.shatterContainer = null;
+    }
+
+    createMirrorShatter() {
+        if (this.isShattered) return;
+        
+        console.log('🪞 Creating mirror shatter effect...');
+        this.isShattered = true;
+        
+        // コンテナを作成
+        this.createShatterContainer();
+        
+        // ボロノイ図で20個の鏡面を生成
+        this.generateVoronoiShards();
+        
+        // 各鏡面にイベントリスナーを追加
+        this.addShardInteractions();
+        
+        // 鏡の割れる音効果
+        this.playShatterSound();
+    }
+
+    createShatterContainer() {
+        this.shatterContainer = document.createElement('div');
+        this.shatterContainer.id = 'mirror-shatter-overlay';
+        this.shatterContainer.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            pointer-events: auto;
+            background: url(data:image/svg+xml;base64,${this.createCrackPattern()});
+            background-size: cover;
+        `;
+        
+        document.body.appendChild(this.shatterContainer);
+    }
+
+    generateVoronoiShards() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        
+        // ランダムな点を生成（ボロノイ図の中心点）
+        const points = [];
+        for (let i = 0; i < this.totalShards; i++) {
+            points.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                id: i
+            });
+        }
+        
+        // 各鏡面を作成
+        points.forEach((point, index) => {
+            const shard = this.createShard(point, index, width, height);
+            this.shards.push(shard);
+            this.shatterContainer.appendChild(shard.element);
+        });
+    }
+
+    createShard(centerPoint, index, screenWidth, screenHeight) {
+        // 簡易ボロノイ計算（周囲の点との中点で境界を決定）
+        const shardPath = this.calculateShardPath(centerPoint, index, screenWidth, screenHeight);
+        
+        const shardElement = document.createElement('div');
+        shardElement.className = 'mirror-shard';
+        shardElement.dataset.shardId = index;
+        shardElement.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            clip-path: ${shardPath};
+            background: 
+                radial-gradient(circle at ${centerPoint.x}px ${centerPoint.y}px, 
+                rgba(255, 255, 255, 0.3) 0%, 
+                rgba(255, 255, 255, 0.1) 50%, 
+                transparent 100%),
+                linear-gradient(${Math.random() * 360}deg, 
+                rgba(200, 200, 255, 0.2), 
+                rgba(255, 200, 255, 0.2));
+            backdrop-filter: blur(1px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        `;
+        
+        return {
+            element: shardElement,
+            centerPoint: centerPoint,
+            index: index,
+            isShattered: false,
+            path: shardPath
+        };
+    }
+
+    calculateShardPath(center, index, width, height) {
+        // 簡易的な多角形を生成（実際のボロノイ図は複雑すぎるため）
+        const sides = 6 + Math.floor(Math.random() * 4); // 6-9角形
+        const radius = 80 + Math.random() * 120; // ランダムなサイズ
+        const angleOffset = Math.random() * Math.PI * 2;
+        
+        let pathPoints = [];
+        
+        for (let i = 0; i < sides; i++) {
+            const angle = (i / sides) * Math.PI * 2 + angleOffset;
+            const variance = 0.7 + Math.random() * 0.6; // 不規則性
+            const x = center.x + Math.cos(angle) * radius * variance;
+            const y = center.y + Math.sin(angle) * radius * variance;
+            
+            // 画面境界内に制限
+            const clampedX = Math.max(0, Math.min(width, x));
+            const clampedY = Math.max(0, Math.min(height, y));
+            
+            pathPoints.push(`${clampedX}px ${clampedY}px`);
+        }
+        
+        return `polygon(${pathPoints.join(', ')})`;
+    }
+
+    addShardInteractions() {
+        this.shards.forEach(shard => {
+            shard.element.addEventListener('mouseenter', () => {
+                if (!shard.isShattered) {
+                    this.shatterShard(shard);
+                }
+            });
+            
+            // ホバー時の光る効果
+            shard.element.addEventListener('mouseover', () => {
+                if (!shard.isShattered) {
+                    shard.element.style.background = `
+                        radial-gradient(circle at ${shard.centerPoint.x}px ${shard.centerPoint.y}px, 
+                        rgba(255, 255, 255, 0.6) 0%, 
+                        rgba(255, 255, 255, 0.2) 50%, 
+                        transparent 100%),
+                        linear-gradient(45deg, 
+                        rgba(255, 200, 200, 0.3), 
+                        rgba(200, 200, 255, 0.3))
+                    `;
+                }
+            });
+            
+            shard.element.addEventListener('mouseleave', () => {
+                if (!shard.isShattered) {
+                    shard.element.style.background = `
+                        radial-gradient(circle at ${shard.centerPoint.x}px ${shard.centerPoint.y}px, 
+                        rgba(255, 255, 255, 0.3) 0%, 
+                        rgba(255, 255, 255, 0.1) 50%, 
+                        transparent 100%)
+                    `;
+                }
+            });
+        });
+    }
+
+    shatterShard(shard) {
+        if (shard.isShattered) return;
+        
+        console.log(`🔨 Shattering mirror shard ${shard.index}`);
+        shard.isShattered = true;
+        this.shatteredCount++;
+        
+        // 崩れ落ちアニメーション
+        this.animateShardFall(shard);
+        
+        // 背景の部分的露出
+        this.revealBackgroundBehind(shard);
+        
+        // 進行状況チェック
+        this.checkProgress();
+        
+        // 破片の音
+        this.playShardBreakSound();
+    }
+
+    animateShardFall(shard) {
+        const element = shard.element;
+        const fallDistance = window.innerHeight + 200;
+        const rotationDegrees = (Math.random() - 0.5) * 720; // -360 to 360度
+        const fallDuration = 1000 + Math.random() * 500; // 1-1.5秒
+        
+        // 重力落下アニメーション
+        element.style.transition = `transform ${fallDuration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity ${fallDuration}ms ease`;
+        element.style.transform = `translateY(${fallDistance}px) rotate(${rotationDegrees}deg) scale(0.5)`;
+        element.style.opacity = '0';
+        
+        // アニメーション完了後に要素を削除
+        setTimeout(() => {
+            if (element.parentNode) {
+                element.remove();
+            }
+        }, fallDuration);
+    }
+
+    revealBackgroundBehind(shard) {
+        // 崩れた部分に黒い背景を露出させる
+        const revealElement = document.createElement('div');
+        revealElement.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #000000, #1a0000, #330000);
+            clip-path: ${shard.path};
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: -1;
+        `;
+        
+        this.shatterContainer.appendChild(revealElement);
+        
+        // 徐々に背景を表示
+        setTimeout(() => {
+            revealElement.style.opacity = '1';
+        }, 100);
+    }
+
+    checkProgress() {
+        const progressPercentage = (this.shatteredCount / this.totalShards) * 100;
+        console.log(`🪞 Progress: ${this.shatteredCount}/${this.totalShards} (${progressPercentage.toFixed(1)}%)`);
+        
+        // 60%達成で自動連鎖崩壊
+        if (this.shatteredCount >= this.autoTriggerThreshold && !this.autoTriggered) {
+            this.autoTriggered = true;
+            console.log('🔥 Auto-trigger threshold reached! Starting chain reaction...');
+            this.triggerChainReaction();
+        }
+        
+        // 100%完了で真実モード移行
+        if (this.shatteredCount >= this.totalShards) {
+            this.completeShatter();
+        }
+    }
+
+    triggerChainReaction() {
+        // 残りの鏡面を順次自動で崩壊
+        const remainingShards = this.shards.filter(shard => !shard.isShattered);
+        
+        remainingShards.forEach((shard, index) => {
+            setTimeout(() => {
+                this.shatterShard(shard);
+            }, index * 200); // 0.2秒間隔で連鎖
+        });
+    }
+
+    completeShatter() {
+        console.log('💀 All mirrors shattered! Revealing complete truth...');
+        
+        setTimeout(() => {
+            // シャッターコンテナを削除
+            if (this.shatterContainer && this.shatterContainer.parentNode) {
+                this.shatterContainer.style.transition = 'opacity 1s ease';
+                this.shatterContainer.style.opacity = '0';
+                
+                setTimeout(() => {
+                    this.shatterContainer.remove();
+                }, 1000);
+            }
+            
+            // 完全な真実モードに移行
+            this.veilMagic.completeTransformation();
+        }, 1000);
+    }
+
+    createCrackPattern() {
+        // SVGクラックパターンをBase64エンコード
+        const crackSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+                <defs>
+                    <filter id="crack">
+                        <feGaussianBlur stdDeviation="0.5"/>
+                    </filter>
+                </defs>
+                <path d="M10,20 Q30,10 50,25 T90,30 L85,40 Q60,35 40,50 T15,45 Z" 
+                      fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1" filter="url(#crack)"/>
+                <path d="M20,60 Q40,70 60,55 T95,65 L90,75 Q70,70 50,85 T25,80 Z" 
+                      fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="0.5" filter="url(#crack)"/>
+            </svg>
+        `;
+        
+        return btoa(crackSvg);
+    }
+
+    playShatterSound() {
+        console.log('🎵 Playing mirror shatter sound');
+    }
+
+    playShardBreakSound() {
+        console.log('🎵 Playing shard break sound');
+    }
+}
+
 class VeilMagic {
     constructor() {
         this.isRevealed = false;
         this.clickCount = 0;
         this.revealThreshold = 3; // 3回クリックで真実が露出
+        this.mirrorSystem = new MirrorShatterSystem(this);
         this.init();
     }
 
@@ -85,32 +391,41 @@ class VeilMagic {
         // 劇的な画面フラッシュ効果
         this.createScreenFlash();
         
-        // 真実を露出させるアニメーション
-        this.createRevealAnimation();
-        
-        // CSSクラスを追加して視覚的変化
-        setTimeout(() => {
-            document.body.classList.add('truth-revealed');
-            document.documentElement.classList.add('truth-revealed');
-        }, 500);
-        
         // メッセージ表示
         setTimeout(() => {
             this.createMessage("心の色が、嘘をついてる", "truth-revealed");
         }, 1000);
         
-        // 背景を強制的に黒に変更（即座に実行）
-        this.forceBackgroundChange();
-        
-        // さらに確実にするため、少し遅れても実行
-        setTimeout(() => this.forceBackgroundChange(), 600);
-        setTimeout(() => this.forceBackgroundChange(), 1200);
+        // 新しい鏡の破片システムを開始
+        setTimeout(() => {
+            this.mirrorSystem.createMirrorShatter();
+        }, 1500);
         
         // 音声効果（あれば）
         this.playSound('reveal');
+    }
+
+    completeTransformation() {
+        // 鏡がすべて崩れた後の完全な真実モード移行
+        console.log('🌟 Complete transformation to truth mode');
+        
+        // CSSクラスを追加して視覚的変化
+        document.body.classList.add('truth-revealed');
+        document.documentElement.classList.add('truth-revealed');
+        
+        // 背景を強制的に黒に変更
+        this.forceBackgroundChange();
+        
+        // 真実を露出させるアニメーション
+        this.createRevealAnimation();
         
         // ナビゲーションメニューを真実版に変更
         this.updateNavigation();
+        
+        // 最終メッセージ
+        setTimeout(() => {
+            this.createMessage("すべての嘘が崩れ落ちた...", "final");
+        }, 1000);
     }
 
     forceReveal() {
