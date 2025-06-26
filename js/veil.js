@@ -91,6 +91,7 @@ class VeilMagic {
         // CSSクラスを追加して視覚的変化
         setTimeout(() => {
             document.body.classList.add('truth-revealed');
+            document.documentElement.classList.add('truth-revealed');
         }, 500);
         
         // メッセージ表示
@@ -98,8 +99,12 @@ class VeilMagic {
             this.createMessage("心の色が、嘘をついてる", "truth-revealed");
         }, 1000);
         
-        // 背景を強制的に黒に変更
+        // 背景を強制的に黒に変更（即座に実行）
         this.forceBackgroundChange();
+        
+        // さらに確実にするため、少し遅れても実行
+        setTimeout(() => this.forceBackgroundChange(), 600);
+        setTimeout(() => this.forceBackgroundChange(), 1200);
         
         // 音声効果（あれば）
         this.playSound('reveal');
@@ -499,16 +504,41 @@ class VeilMagic {
     }
 
     forceBackgroundChange() {
-        // 背景を強制的に黒に変更
-        document.body.style.background = 'linear-gradient(135deg, #000000, #1a0000, #330000)';
+        // 背景を強制的に黒に変更 - 複数の方法で確実に
+        document.body.style.setProperty('background', 'linear-gradient(135deg, #000000, #1a0000, #330000)', 'important');
+        document.body.style.setProperty('background-image', 'linear-gradient(135deg, #000000, #1a0000, #330000)', 'important');
+        document.body.style.setProperty('background-color', '#000000', 'important');
         document.body.style.backgroundAttachment = 'fixed';
+        
+        // HTMLとDocumentの背景も変更
+        document.documentElement.style.setProperty('background', '#000000', 'important');
+        document.documentElement.style.setProperty('background-color', '#000000', 'important');
+        
+        // メインコンテナも変更
+        const container = document.getElementById('veil-container');
+        if (container) {
+            container.style.setProperty('background', 'linear-gradient(135deg, #000000, #1a0000, #330000)', 'important');
+        }
+        
+        // メインコンテンツの背景も変更
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) {
+            mainContent.style.setProperty('background', 'linear-gradient(135deg, #000000, #1a0000, #330000)', 'important');
+        }
         
         // すべてのセクションの背景も変更
         const sections = document.querySelectorAll('.content-section');
         sections.forEach(section => {
-            section.style.background = 'rgba(20, 20, 20, 0.95)';
-            section.style.border = '2px solid #ff6b6b';
+            section.style.setProperty('background', 'rgba(20, 20, 20, 0.95)', 'important');
+            section.style.setProperty('border', '2px solid #ff6b6b', 'important');
+            section.style.setProperty('box-shadow', '0 0 20px rgba(255, 107, 107, 0.5)', 'important');
         });
+        
+        // ヒーローセクションも変更
+        const heroSection = document.getElementById('hero-section');
+        if (heroSection) {
+            heroSection.style.setProperty('background', 'radial-gradient(circle, rgba(0,0,0,0.9), rgba(26,0,0,0.9))', 'important');
+        }
     }
 
     playSound(type) {
