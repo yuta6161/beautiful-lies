@@ -11,7 +11,9 @@ class RealisticMirrorSystem {
         this.isShattered = false;
         this.mirrorLayer = null;
         this.crackLayer = null;
-        this.voronoiPoints = [];
+        this.centerX = 0;
+        this.centerY = 0;
+        this.crackPaths = [];
     }
 
     createRealisticMirror() {
@@ -20,23 +22,27 @@ class RealisticMirrorSystem {
             return;
         }
         
-        console.log('🪞 Creating realistic broken mirror effect...');
+        console.log('🪞 Creating realistic broken mirror effect - 画面全体が一つの鏡として割れます...');
         this.isShattered = true;
         
         try {
             // Step 1: 画面全体に鏡レイヤーを作成
-            console.log('🪞 Step 1: Creating full-screen mirror layer...');
+            console.log('🪞 Step 1: Creating full-screen continuous mirror layer...');
             this.createMirrorLayer();
             
-            // Step 2: ボロノイ図で30個のセルを生成
-            console.log('🪞 Step 2: Generating 30 Voronoi cells...');
-            this.generateVoronoiCells();
+            // Step 2: 中央から放射状にひび割れを生成
+            console.log('🪞 Step 2: Generating radial cracks from center...');
+            this.generateRadialCracks();
             
-            // Step 3: ひび割れアニメーション
-            console.log('🪞 Step 3: Starting crack animation...');
+            // Step 3: ひび割れで区切られた30個の連続セルを作成
+            console.log('🪞 Step 3: Creating 30 connected mirror cells...');
+            this.createConnectedCells();
+            
+            // Step 4: ひび割れアニメーション
+            console.log('🪞 Step 4: Starting crack animation...');
             this.animateCrackFormation();
             
-            console.log('🪞 ✅ Realistic mirror system fully initialized!');
+            console.log('🪞 ✅ Realistic continuous mirror system fully initialized!');
         } catch (error) {
             console.error('❌ Error in createRealisticMirror:', error);
             throw error;
@@ -47,6 +53,12 @@ class RealisticMirrorSystem {
         // 既存のレイヤーがあれば削除
         const existing = document.getElementById('realistic-mirror-overlay');
         if (existing) existing.remove();
+        
+        // 画面のサイズと中央点を設定
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        this.centerX = width / 2;
+        this.centerY = height / 2;
         
         this.mirrorLayer = document.createElement('div');
         this.mirrorLayer.id = 'realistic-mirror-overlay';
@@ -59,70 +71,152 @@ class RealisticMirrorSystem {
             z-index: 10000 !important;
             pointer-events: auto !important;
             background: 
-                radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.4) 0%, transparent 50%),
-                radial-gradient(circle at 70% 20%, rgba(200, 200, 255, 0.3) 0%, transparent 40%),
-                radial-gradient(circle at 20% 80%, rgba(255, 200, 255, 0.3) 0%, transparent 45%),
-                linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(240, 240, 255, 0.2)) !important;
-            backdrop-filter: blur(0.5px) !important;
-            box-shadow: inset 0 0 50px rgba(255, 255, 255, 0.1) !important;
+                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 50%, transparent 80%),
+                radial-gradient(ellipse at 30% 20%, rgba(200, 200, 255, 0.2) 0%, transparent 60%),
+                radial-gradient(ellipse at 70% 80%, rgba(255, 200, 255, 0.2) 0%, transparent 60%),
+                linear-gradient(45deg, rgba(255, 255, 255, 0.05), rgba(240, 240, 255, 0.05)) !important;
+            backdrop-filter: blur(0.3px) !important;
+            box-shadow: inset 0 0 100px rgba(255, 255, 255, 0.1) !important;
         `;
         
         document.body.appendChild(this.mirrorLayer);
-        console.log('🪞 Mirror layer created and appended');
+        console.log(`🪞 Full-screen mirror layer created: ${width}x${height}, center: (${this.centerX}, ${this.centerY})`);
     }
 
-    generateVoronoiCells() {
+    generateRadialCracks() {
         const width = window.innerWidth;
         const height = window.innerHeight;
         
-        // ボロノイ図の中心点を生成（より均等に分散）
-        this.voronoiPoints = this.generateWellDistributedPoints(width, height);
+        // 中央から放射状に30本のひび割れを生成
+        this.crackPaths = [];
         
-        // 各セルを作成
-        this.voronoiPoints.forEach((point, index) => {
-            const cell = this.createMirrorCell(point, index, width, height);
-            this.cells.push(cell);
-            this.mirrorLayer.appendChild(cell.element);
-        });
+        for (let i = 0; i < this.totalCells; i++) {
+            const angle = (i / this.totalCells) * Math.PI * 2;
+            const crackPath = this.generateCrackLine(angle, width, height);
+            this.crackPaths.push({
+                angle: angle,
+                path: crackPath,
+                id: i
+            });
+        }
         
-        console.log(`🪞 Generated ${this.cells.length} mirror cells`);
+        console.log(`🪞 Generated ${this.crackPaths.length} radial crack paths from center`);
     }
 
-    generateWellDistributedPoints(width, height) {
-        const points = [];
-        const cols = 6; // 6列
-        const rows = 5; // 5行
-        const cellWidth = width / cols;
-        const cellHeight = height / rows;
+    generateCrackLine(angle, width, height) {
+        // 中央からの角度で放射状のひび割れラインを生成
+        const maxDistance = Math.sqrt(width * width + height * height) / 2;
         
-        for (let row = 0; row < rows; row++) {
-            for (let col = 0; col < cols; col++) {
-                if (points.length >= this.totalCells) break;
-                
-                // グリッドベースの配置にランダム性を加える
-                const baseX = (col + 0.5) * cellWidth;
-                const baseY = (row + 0.5) * cellHeight;
-                
-                // ±30%のランダム変動
-                const offsetX = (Math.random() - 0.5) * cellWidth * 0.6;
-                const offsetY = (Math.random() - 0.5) * cellHeight * 0.6;
-                
-                points.push({
-                    x: Math.max(50, Math.min(width - 50, baseX + offsetX)),
-                    y: Math.max(50, Math.min(height - 50, baseY + offsetY)),
-                    id: points.length
-                });
-            }
-            if (points.length >= this.totalCells) break;
+        // 不規則性を追加してリアルなひび割れにする
+        const segments = 8; // ひび割れを8セグメントに分割
+        const points = [`${this.centerX} ${this.centerY}`]; // 中央から開始
+        
+        for (let segment = 1; segment <= segments; segment++) {
+            const distance = (segment / segments) * maxDistance;
+            
+            // 角度に揺らぎを追加（±15度）
+            const angleVariation = (Math.random() - 0.5) * 0.26; // ±15度 ≈ ±0.26ラジアン
+            const actualAngle = angle + angleVariation;
+            
+            // 距離に揺らぎを追加（±20%）
+            const distanceVariation = 0.8 + Math.random() * 0.4; // 80%-120%
+            const actualDistance = distance * distanceVariation;
+            
+            const x = this.centerX + Math.cos(actualAngle) * actualDistance;
+            const y = this.centerY + Math.sin(actualAngle) * actualDistance;
+            
+            // 画面境界を超えないように制限
+            const clampedX = Math.max(0, Math.min(width, x));
+            const clampedY = Math.max(0, Math.min(height, y));
+            
+            points.push(`${clampedX} ${clampedY}`);
         }
         
         return points;
     }
 
-    createMirrorCell(centerPoint, index, screenWidth, screenHeight) {
-        // ボロノイセルの境界を簡易計算
-        const cellPath = this.calculateVoronoiCell(centerPoint, index, screenWidth, screenHeight);
+    createConnectedCells() {
+        // ひび割れラインで区切られた30個の連続したセルを作成
+        const width = window.innerWidth;
+        const height = window.innerHeight;
         
+        for (let i = 0; i < this.totalCells; i++) {
+            const cellPath = this.calculateCellClipPath(i, width, height);
+            const cell = this.createConnectedMirrorCell(i, cellPath);
+            this.cells.push(cell);
+            this.mirrorLayer.appendChild(cell.element);
+        }
+        
+        console.log(`🪞 Created ${this.cells.length} connected mirror cells`);
+    }
+
+    calculateCellClipPath(cellIndex, width, height) {
+        // 隣接する2つのひび割れラインの間の領域を計算
+        const currentCrack = this.crackPaths[cellIndex];
+        const nextCrack = this.crackPaths[(cellIndex + 1) % this.totalCells];
+        
+        // セルの境界点を計算
+        const pathPoints = [];
+        
+        // 中央点から開始
+        pathPoints.push(`${this.centerX}px ${this.centerY}px`);
+        
+        // 現在のひび割れラインを辿って外側へ
+        currentCrack.path.slice(1).forEach(point => {
+            pathPoints.push(point.replace(' ', 'px ') + 'px');
+        });
+        
+        // 外縁を回り込む（画面境界に沿って）
+        const currentLastPoint = currentCrack.path[currentCrack.path.length - 1];
+        const nextLastPoint = nextCrack.path[nextCrack.path.length - 1];
+        
+        // 境界に沿った経路を追加
+        const boundaryPoints = this.calculateBoundaryPath(currentLastPoint, nextLastPoint, width, height);
+        boundaryPoints.forEach(point => {
+            pathPoints.push(point.replace(' ', 'px ') + 'px');
+        });
+        
+        // 次のひび割れラインを逆順で辿って中央に戻る
+        const reversedNextPath = [...nextCrack.path].reverse().slice(1);
+        reversedNextPath.forEach(point => {
+            pathPoints.push(point.replace(' ', 'px ') + 'px');
+        });
+        
+        return `polygon(${pathPoints.join(', ')})`;
+    }
+
+    calculateBoundaryPath(startPoint, endPoint, width, height) {
+        // 画面の境界に沿った経路を計算
+        const start = startPoint.split(' ').map(Number);
+        const end = endPoint.split(' ').map(Number);
+        const boundaryPoints = [];
+        
+        // 簡略化: 直線で繋ぐ（実際はより複雑な境界計算が必要）
+        const steps = 3;
+        for (let i = 1; i <= steps; i++) {
+            const t = i / (steps + 1);
+            const x = start[0] + (end[0] - start[0]) * t;
+            const y = start[1] + (end[1] - start[1]) * t;
+            
+            // 境界に近づけるため外側に押し出す
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const dx = x - centerX;
+            const dy = y - centerY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const maxDistance = Math.sqrt(width * width + height * height) / 2;
+            
+            const pushFactor = maxDistance / distance;
+            const pushedX = centerX + dx * pushFactor * 1.1;
+            const pushedY = centerY + dy * pushFactor * 1.1;
+            
+            boundaryPoints.push(`${Math.max(0, Math.min(width, pushedX))} ${Math.max(0, Math.min(height, pushedY))}`);
+        }
+        
+        return boundaryPoints;
+    }
+
+    createConnectedMirrorCell(index, cellPath) {
         const cellElement = document.createElement('div');
         cellElement.className = 'mirror-cell';
         cellElement.dataset.cellId = index;
@@ -143,13 +237,13 @@ class RealisticMirrorSystem {
         const label = document.createElement('span');
         label.style.cssText = `
             position: absolute;
-            left: ${centerPoint.x}px;
-            top: ${centerPoint.y}px;
+            left: 50%;
+            top: 50%;
             transform: translate(-50%, -50%);
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 10px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 12px;
             font-weight: bold;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
             pointer-events: none;
             z-index: 10002;
         `;
@@ -158,57 +252,13 @@ class RealisticMirrorSystem {
         
         return {
             element: cellElement,
-            centerPoint: centerPoint,
+            angle: this.crackPaths[index].angle,
             index: index,
             isShattered: false,
             path: cellPath
         };
     }
 
-    calculateVoronoiCell(point, index, width, height) {
-        // 実際のボロノイ図は複雑すぎるので、近似版を作成
-        const neighbors = this.voronoiPoints
-            .filter(p => p.id !== point.id)
-            .map(p => ({
-                ...p,
-                distance: Math.hypot(p.x - point.x, p.y - point.y)
-            }))
-            .sort((a, b) => a.distance - b.distance)
-            .slice(0, 6); // 最も近い6つの点
-        
-        // 簡易的な多角形を生成
-        const angles = [];
-        neighbors.forEach(neighbor => {
-            const angle = Math.atan2(neighbor.y - point.y, neighbor.x - point.x);
-            angles.push(angle);
-        });
-        
-        // 角度でソート
-        angles.sort((a, b) => a - b);
-        
-        // 多角形の頂点を計算
-        const vertices = [];
-        const baseRadius = Math.min(width, height) / 8; // 基本半径
-        
-        angles.forEach((angle, i) => {
-            const nextAngle = angles[(i + 1) % angles.length];
-            const midAngle = (angle + nextAngle) / 2;
-            
-            // 半径にランダム変動を加える
-            const radius = baseRadius * (0.8 + Math.random() * 0.4);
-            
-            const x = point.x + Math.cos(midAngle) * radius;
-            const y = point.y + Math.sin(midAngle) * radius;
-            
-            // 画面境界内に制限
-            const clampedX = Math.max(0, Math.min(width, x));
-            const clampedY = Math.max(0, Math.min(height, y));
-            
-            vertices.push(`${clampedX}px ${clampedY}px`);
-        });
-        
-        return `polygon(${vertices.join(', ')})`;
-    }
 
     animateCrackFormation() {
         // ひび割れラインをSVGで描画
@@ -243,54 +293,44 @@ class RealisticMirrorSystem {
             opacity: 0;
         `;
         
-        // ボロノイセル間の境界線を描画
-        this.drawVoronoiBoundaries(svg);
+        // 放射状のひび割れラインを描画
+        this.drawRadialCracks(svg);
         
         this.crackLayer = svg;
         this.mirrorLayer.appendChild(svg);
+        console.log('🪞 Radial crack SVG layer created');
     }
 
-    drawVoronoiBoundaries(svg) {
-        // 各セルの境界を白い線で描画
-        this.cells.forEach((cell, index) => {
-            // 隣接セルとの境界線を描画（簡略版）
+    drawRadialCracks(svg) {
+        // 各ひび割れパスを白い線でSVGに描画
+        this.crackPaths.forEach((crack, index) => {
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             
-            // 簡易的な境界線（実際のボロノイ図の境界線の近似）
-            const boundaryPath = this.generateBoundaryPath(cell, index);
+            // SVGパス形式に変換
+            let pathData = `M ${crack.path[0]}`;
+            for (let i = 1; i < crack.path.length; i++) {
+                pathData += ` L ${crack.path[i]}`;
+            }
             
-            path.setAttribute('d', boundaryPath);
-            path.setAttribute('stroke', 'rgba(255, 255, 255, 0.8)');
+            path.setAttribute('d', pathData);
+            path.setAttribute('stroke', 'rgba(255, 255, 255, 0.9)');
             path.setAttribute('stroke-width', '2');
             path.setAttribute('fill', 'none');
             path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('stroke-linejoin', 'round');
+            path.setAttribute('opacity', '0');
+            
+            // ひび割れアニメーション用の属性
+            path.style.strokeDasharray = '0';
+            path.style.strokeDashoffset = '0';
+            path.style.transition = 'stroke-dasharray 0.8s ease, opacity 0.3s ease';
             
             svg.appendChild(path);
         });
+        
+        console.log(`🪞 Drew ${this.crackPaths.length} radial crack lines`);
     }
 
-    generateBoundaryPath(cell, index) {
-        // 各セルの周囲に境界線を描画
-        const center = cell.centerPoint;
-        const radius = 100;
-        const segments = 8;
-        
-        let path = '';
-        for (let i = 0; i < segments; i++) {
-            const angle = (i / segments) * Math.PI * 2;
-            const x = center.x + Math.cos(angle) * radius * (0.7 + Math.random() * 0.6);
-            const y = center.y + Math.sin(angle) * radius * (0.7 + Math.random() * 0.6);
-            
-            if (i === 0) {
-                path += `M ${x} ${y}`;
-            } else {
-                path += ` L ${x} ${y}`;
-            }
-        }
-        path += ' Z';
-        
-        return path;
-    }
 
     showImpactEffect() {
         // 短い衝撃エフェクト
@@ -317,8 +357,29 @@ class RealisticMirrorSystem {
 
     revealCracks() {
         if (this.crackLayer) {
-            this.crackLayer.style.transition = 'opacity 0.8s ease';
+            // SVGレイヤーを表示
+            this.crackLayer.style.transition = 'opacity 0.3s ease';
             this.crackLayer.style.opacity = '1';
+            
+            // 各ひび割れラインを順次アニメーション表示
+            const crackPaths = this.crackLayer.querySelectorAll('path');
+            crackPaths.forEach((path, index) => {
+                setTimeout(() => {
+                    // ひび割れが中央から外側に向かって現れるアニメーション
+                    const pathLength = path.getTotalLength();
+                    path.style.strokeDasharray = `${pathLength}`;
+                    path.style.strokeDashoffset = `${pathLength}`;
+                    path.style.opacity = '1';
+                    
+                    // アニメーション開始
+                    setTimeout(() => {
+                        path.style.transition = 'stroke-dashoffset 0.6s ease-out';
+                        path.style.strokeDashoffset = '0';
+                    }, 50);
+                }, index * 30); // 30ms間隔で順次表示
+            });
+            
+            console.log(`🪞 Revealing ${crackPaths.length} crack lines with animation`);
         }
     }
 
