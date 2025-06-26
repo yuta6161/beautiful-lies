@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veil - Beautiful Lies</title>
+    <link rel="stylesheet" href="css/beautiful.css" id="main-style">
+    <link rel="stylesheet" href="css/truth.css" id="truth-style" disabled>
+</head>
+<body>
+    <div id="veil-container">
+        <!-- ヘッダー部分 -->
+        <header id="main-header">
+            <nav>
+                <ul id="nav-menu">
+                    <li><a href="#about" class="nav-link">About</a></li>
+                    <li><a href="#gallery" class="nav-link">Gallery</a></li>
+                    <li><a href="#quotes" class="nav-link">Quotes</a></li>
+                    <li><a href="#contact" class="nav-link">Contact</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <!-- メインビジュアル -->
+        <main id="main-content">
+            <section id="hero-section">
+                <div id="veil-image-container">
+                    <img src="images/veil/veil-beautiful.jpg" alt="Veil" id="veil-main-image" class="clickable">
+                </div>
+                <div id="title-container">
+                    <h1 id="main-title">Welcome to Veil's World</h1>
+                    <p id="subtitle">Where dreams and reality intertwine</p>
+                </div>
+                
+                <!-- 隠されたメッセージ -->
+                <div id="hidden-message" class="hidden">
+                    <h1 id="truth-title">心の色が、嘘をついてる</h1>
+                    <p id="truth-subtitle">Beautiful lies cannot hide the ugly truth forever</p>
+                </div>
+            </section>
+
+            <!-- コンテンツセクション -->
+            <section id="about" class="content-section">
+                <div class="section-container">
+                    <h2 class="section-title">About Veil</h2>
+                    <div class="content-text">
+                        <p>Veil is a mysterious being who exists between reality and dreams. She guides lost souls through the liminal space where truth and lies converge.</p>
+                        
+                        <!-- 真実の内容（隠されている） -->
+                        <div class="truth-content hidden">
+                            <p>現実の人間は皆、記憶を都合よく書き換え、本心を隠している。Veilはそんな「美しい嘘」に満ちた世界に嫌気が差している。</p>
+                            <p>しかし境界世界で迷う人々は、防御機制を失い純粋な感情を露出させる。彼らの美しい真実を見るため、Veilは案内人として働いている。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="gallery" class="content-section">
+                <div class="section-container">
+                    <h2 class="section-title">Gallery</h2>
+                    <div class="gallery-grid">
+                        <div class="gallery-item clickable">
+                            <img src="images/veil/placeholder1.jpg" alt="Veil Art 1">
+                        </div>
+                        <div class="gallery-item clickable">
+                            <img src="images/veil/placeholder2.jpg" alt="Veil Art 2">
+                        </div>
+                        <div class="gallery-item clickable">
+                            <img src="images/veil/placeholder3.jpg" alt="Veil Art 3">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="quotes" class="content-section">
+                <div class="section-container">
+                    <h2 class="section-title">Famous Quotes</h2>
+                    <div class="quotes-container">
+                        <blockquote class="quote-item clickable">
+                            <p>"あなたの記憶、とても美しい色をしているのね..."</p>
+                        </blockquote>
+                        <blockquote class="quote-item clickable">
+                            <p>"境界なんてね、最初から存在しないのかもしれない"</p>
+                        </blockquote>
+                        <blockquote class="quote-item clickable main-quote">
+                            <p>"心の色が、嘘をついてる"</p>
+                        </blockquote>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- フッター -->
+        <footer id="main-footer">
+            <p>&copy; 2024 Beautiful Lies - A Veil Fansite</p>
+        </footer>
+    </div>
+
+    <!-- オーバーレイエフェクト -->
+    <div id="crack-overlay" class="hidden"></div>
+    <div id="glitch-overlay" class="hidden"></div>
+
+    <script src="js/veil.js"></script>
+</body>
+</html>

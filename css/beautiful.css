@@ -1,0 +1,315 @@
+/* Beautiful Lies - 美しい嘘のスタイル */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: linear-gradient(135deg, #ffeef7, #f0e6ff, #e6f7ff);
+    color: #6b4e85;
+    line-height: 1.6;
+    transition: all 0.8s ease;
+}
+
+/* ヘッダー */
+#main-header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(255, 192, 203, 0.3);
+    transition: all 0.5s ease;
+}
+
+#nav-menu {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    gap: 2rem;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: #8b5a96;
+    font-weight: 500;
+    font-size: 1.1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    background: linear-gradient(45deg, transparent, rgba(255, 192, 203, 0.1));
+}
+
+.nav-link:hover {
+    background: linear-gradient(45deg, #ffc0cb, #dda0dd);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 192, 203, 0.4);
+}
+
+/* メインコンテンツ */
+#main-content {
+    margin-top: 80px;
+    padding: 2rem;
+}
+
+/* ヒーローセクション */
+#hero-section {
+    text-align: center;
+    padding: 4rem 0;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8), transparent);
+}
+
+#veil-image-container {
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+#veil-main-image {
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    border: 3px solid #dda0dd;
+    box-shadow: 0 10px 30px rgba(255, 192, 203, 0.3);
+    transition: all 0.5s ease;
+    cursor: pointer;
+    background: linear-gradient(45deg, #ffc0cb, #e6e6fa);
+    object-fit: cover;
+}
+
+#veil-main-image:hover {
+    transform: scale(1.05);
+    box-shadow: 0 20px 40px rgba(255, 192, 203, 0.5);
+    border-color: #ff69b4;
+}
+
+#title-container h1 {
+    font-size: 3rem;
+    color: #8b5a96;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
+    letter-spacing: 2px;
+}
+
+#subtitle {
+    font-size: 1.3rem;
+    color: #b39ddb;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+/* 隠されたメッセージ（初期状態では非表示） */
+#hidden-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.8s ease;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* コンテンツセクション */
+.content-section {
+    margin: 4rem 0;
+    padding: 3rem;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(255, 192, 203, 0.2);
+    backdrop-filter: blur(5px);
+    transition: all 0.5s ease;
+}
+
+.content-section:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(255, 192, 203, 0.3);
+}
+
+.section-title {
+    font-size: 2.5rem;
+    color: #8b5a96;
+    text-align: center;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #dda0dd;
+    padding-bottom: 1rem;
+}
+
+.content-text {
+    font-size: 1.2rem;
+    color: #6b5b73;
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.8;
+}
+
+/* ギャラリー */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.gallery-item {
+    position: relative;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(255, 192, 203, 0.3);
+    transition: all 0.4s ease;
+    cursor: pointer;
+    background: linear-gradient(45deg, #ffc0cb, #e6e6fa);
+    height: 200px;
+}
+
+.gallery-item:hover {
+    transform: scale(1.03) rotate(1deg);
+    box-shadow: 0 15px 35px rgba(255, 192, 203, 0.5);
+}
+
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: all 0.3s ease;
+}
+
+/* 引用セクション */
+.quotes-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.quote-item {
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.9), rgba(255, 192, 203, 0.1));
+    padding: 2rem;
+    border-radius: 15px;
+    border-left: 4px solid #dda0dd;
+    box-shadow: 0 5px 20px rgba(255, 192, 203, 0.2);
+    transition: all 0.4s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.quote-item:hover {
+    transform: translateX(10px);
+    box-shadow: 0 10px 30px rgba(255, 192, 203, 0.4);
+    border-left-color: #ff69b4;
+}
+
+.quote-item p {
+    font-size: 1.3rem;
+    color: #8b5a96;
+    font-style: italic;
+    text-align: center;
+}
+
+.main-quote {
+    background: linear-gradient(45deg, rgba(255, 192, 203, 0.2), rgba(221, 160, 221, 0.2));
+    border-left-color: #ff1493;
+    font-weight: bold;
+}
+
+.main-quote p {
+    font-size: 1.5rem;
+    color: #8b008b;
+}
+
+/* フッター */
+#main-footer {
+    text-align: center;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-top: 1px solid rgba(255, 192, 203, 0.3);
+    color: #8b5a96;
+    margin-top: 4rem;
+}
+
+/* クリック可能な要素 */
+.clickable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.clickable:hover {
+    filter: brightness(1.1);
+}
+
+/* オーバーレイ（初期状態では非表示） */
+#crack-overlay,
+#glitch-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+    #nav-menu {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    #title-container h1 {
+        font-size: 2rem;
+    }
+    
+    #veil-main-image {
+        width: 250px;
+        height: 250px;
+    }
+    
+    .content-section {
+        margin: 2rem 0;
+        padding: 2rem;
+    }
+    
+    .gallery-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 美しいアニメーション */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+#veil-main-image {
+    animation: float 3s ease-in-out infinite;
+}
+
+/* 輝くエフェクト */
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.content-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    animation: shimmer 3s infinite;
+}
