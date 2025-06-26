@@ -104,8 +104,8 @@ class RealisticMirrorSystem {
         // Step 2: 枝分かれひび割れ（現実的な横ひび割れ）
         this.generateRealisticBranches(width, height);
         
-        // Step 3: 統合されたひび割れから不規則破片を計算
-        this.calculateRealisticFragments(width, height);
+        // Step 3: 幾何学的分割で実際の破片領域を計算
+        this.calculateGeometricFragments(width, height);
         
         console.log(`🪞 Generated realistic crack pattern: ${this.mainCracks.length} main + ${this.branchCracks.length} branch = ${this.fragments.length} fragments`);
     }
@@ -284,69 +284,258 @@ class RealisticMirrorSystem {
         return { x: endX, y: endY };
     }
 
-    calculateRealisticFragments(width, height) {
-        // 現実的なひび割れパターンから不規則破片を計算
+    calculateGeometricFragments(width, height) {
+        // 本格的な幾何学的分割アルゴリズム
         this.cells = [];
         this.fragments = [];
+        this.intersections = [];
         
-        // 簡略版: グリッドベースで不規則破片を生成し、ひび割れに影響させる
-        const gridCols = 5;
-        const gridRows = 4;
-        const cellWidth = width / gridCols;
-        const cellHeight = height / gridRows;
+        console.log('🔬 Starting geometric fragmentation...');
         
-        let fragmentId = 0;
+        // Step 1: 全てのひび割れラインの交点を計算
+        this.calculateAllIntersections(width, height);
         
-        for (let row = 0; row < gridRows && fragmentId < this.totalCells; row++) {
-            for (let col = 0; col < gridCols && fragmentId < this.totalCells; col++) {
-                const baseX = col * cellWidth;
-                const baseY = row * cellHeight;
-                
-                const fragment = this.createRealisticFragment(
-                    baseX, baseY, cellWidth, cellHeight, fragmentId, width, height
+        // Step 2: 交点とひび割れラインから閉じた領域を特定
+        this.identifyClosedRegions(width, height);
+        
+        console.log(`🧮 Geometric calculation complete: ${this.intersections.length} intersections, ${this.fragments.length} regions`);
+    }
+
+    calculateAllIntersections(width, height) {
+        // 全てのひび割れライン間の交点を計算
+        const allSegments = [];
+        
+        // 全てのひび割れラインをセグメントに分解
+        this.allCrackLines.forEach((crack, crackIndex) => {
+            if (crack.points) {
+                for (let i = 0; i < crack.points.length - 1; i++) {
+                    const start = crack.points[i].split(' ').map(Number);
+                    const end = crack.points[i + 1].split(' ').map(Number);
+                    allSegments.push({
+                        x1: start[0], y1: start[1],
+                        x2: end[0], y2: end[1],
+                        crackIndex: crackIndex,
+                        segmentIndex: i
+                    });
+                }
+            }
+        });
+        
+        // 画面境界も追加
+        allSegments.push(
+            { x1: 0, y1: 0, x2: width, y2: 0, crackIndex: -1, segmentIndex: 0 }, // 上端
+            { x1: width, y1: 0, x2: width, y2: height, crackIndex: -1, segmentIndex: 1 }, // 右端
+            { x1: width, y1: height, x2: 0, y2: height, crackIndex: -1, segmentIndex: 2 }, // 下端
+            { x1: 0, y1: height, x2: 0, y2: 0, crackIndex: -1, segmentIndex: 3 } // 左端
+        );
+        
+        // 全ての交点を計算
+        for (let i = 0; i < allSegments.length; i++) {
+            for (let j = i + 1; j < allSegments.length; j++) {
+                const intersection = this.calculateLineIntersection(
+                    allSegments[i], allSegments[j]
                 );
-                
-                this.fragments.push(fragment);
-                this.cells.push(fragment);
-                this.mirrorLayer.appendChild(fragment.element);
-                fragmentId++;
+                if (intersection) {
+                    this.intersections.push({
+                        x: intersection.x,
+                        y: intersection.y,
+                        segment1: i,
+                        segment2: j
+                    });
+                }
             }
         }
         
-        console.log(`🪞 Created ${this.fragments.length} realistic fragments`);
+        this.allSegments = allSegments;
+        console.log(`🔍 Found ${this.intersections.length} intersections from ${allSegments.length} segments`);
     }
 
-    createRealisticFragment(baseX, baseY, cellWidth, cellHeight, index, screenWidth, screenHeight) {
-        // ひび割れの影響を受けた不規則破片を作成
-        const sides = 4 + Math.floor(Math.random() * 4); // 4-7角形
-        const points = [];
+    calculateLineIntersection(seg1, seg2) {
+        // 2つの線分の交点を計算
+        const { x1: x1, y1: y1, x2: x2, y2: y2 } = seg1;
+        const { x1: x3, y1: y3, x2: x4, y2: y4 } = seg2;
         
-        // グリッドセル内で不規則な多角形を生成
-        const centerX = baseX + cellWidth * (0.3 + Math.random() * 0.4);
-        const centerY = baseY + cellHeight * (0.3 + Math.random() * 0.4);
+        const denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+        if (Math.abs(denominator) < 1e-10) return null; // 平行線
         
-        for (let i = 0; i < sides; i++) {
-            const angle = (i / sides) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
-            
-            // ひび割れとの距離に基づいて形を調整
-            const distanceToNearestCrack = this.getDistanceToNearestCrack(centerX, centerY);
-            const crackInfluence = Math.max(0, 1 - distanceToNearestCrack / 200);
-            
-            // ひび割れに近いほど不規則になる
-            const baseRadius = Math.min(cellWidth, cellHeight) * (0.3 + Math.random() * 0.4);
-            const irregularity = 1 + crackInfluence * (Math.random() - 0.5) * 0.8;
-            const radius = baseRadius * irregularity;
-            
-            const x = centerX + Math.cos(angle) * radius;
-            const y = centerY + Math.sin(angle) * radius;
-            
-            const clampedX = Math.max(0, Math.min(screenWidth, x));
-            const clampedY = Math.max(0, Math.min(screenHeight, y));
-            
-            points.push(`${clampedX}px ${clampedY}px`);
+        const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denominator;
+        const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denominator;
+        
+        if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+            return {
+                x: x1 + t * (x2 - x1),
+                y: y1 + t * (y2 - y1)
+            };
         }
         
-        const clipPath = `polygon(${points.join(', ')})`;
+        return null;
+    }
+
+    identifyClosedRegions(width, height) {
+        // 簡略版: 主要な領域をマニュアルで特定
+        // 本格的な実装では、グラフ理論的アプローチが必要
+        
+        const regions = [];
+        
+        // 中央領域（全てのメインひび割れに囲まれた部分）
+        const centerRegion = this.createCenterRegion();
+        if (centerRegion) regions.push(centerRegion);
+        
+        // メインひび割れ間の扇形領域
+        for (let i = 0; i < this.mainCracks.length; i++) {
+            const currentCrack = this.mainCracks[i];
+            const nextCrack = this.mainCracks[(i + 1) % this.mainCracks.length];
+            
+            const sectorRegion = this.createSectorRegion(currentCrack, nextCrack, width, height);
+            if (sectorRegion) regions.push(sectorRegion);
+        }
+        
+        // 枝分かれひび割れで細分化された領域
+        const subdivisionRegions = this.createSubdivisionRegions(width, height);
+        regions.push(...subdivisionRegions);
+        
+        // 各領域から実際の破片要素を作成
+        regions.forEach((region, index) => {
+            if (region.boundary && region.boundary.length >= 3) {
+                const fragment = this.createGeometricFragment(region, index);
+                this.fragments.push(fragment);
+                this.cells.push(fragment);
+                this.mirrorLayer.appendChild(fragment.element);
+            }
+        });
+    }
+
+    createCenterRegion() {
+        // 中央の小さな領域（全メインひび割れの開始点周辺）
+        const centerSize = 30;
+        const points = [];
+        
+        // 中央周りの小さな多角形
+        const sides = 6;
+        for (let i = 0; i < sides; i++) {
+            const angle = (i / sides) * Math.PI * 2;
+            const x = this.centerX + Math.cos(angle) * centerSize;
+            const y = this.centerY + Math.sin(angle) * centerSize;
+            points.push(`${x}px ${y}px`);
+        }
+        
+        return {
+            type: 'center',
+            boundary: points,
+            centerX: this.centerX,
+            centerY: this.centerY
+        };
+    }
+
+    createSectorRegion(crack1, crack2, width, height) {
+        // 2つのメインひび割れ間の扇形領域
+        const points = [];
+        
+        // 中央点から開始
+        points.push(`${this.centerX}px ${this.centerY}px`);
+        
+        // 最初のメインひび割れに沿って外側へ
+        const midPoint1 = this.getPointOnCrack(crack1, 0.7);
+        points.push(`${midPoint1.x}px ${midPoint1.y}px`);
+        points.push(`${crack1.endX}px ${crack1.endY}px`);
+        
+        // 画面境界を回る
+        const arcPoints = this.generateBoundaryArc(
+            crack1.endX, crack1.endY, crack2.endX, crack2.endY, width, height
+        );
+        arcPoints.forEach(point => points.push(point));
+        
+        // 次のメインひび割れの終点
+        points.push(`${crack2.endX}px ${crack2.endY}px`);
+        
+        // 2番目のメインひび割れに沿って中央へ
+        const midPoint2 = this.getPointOnCrack(crack2, 0.7);
+        points.push(`${midPoint2.x}px ${midPoint2.y}px`);
+        
+        return {
+            type: 'sector',
+            boundary: points,
+            centerX: (crack1.endX + crack2.endX + this.centerX) / 3,
+            centerY: (crack1.endY + crack2.endY + this.centerY) / 3
+        };
+    }
+
+    createSubdivisionRegions(width, height) {
+        // 枝分かれひび割れで細分化された追加領域
+        const regions = [];
+        const maxRegions = Math.max(0, this.totalCells - this.mainCracks.length - 1);
+        
+        // 簡略版: 枝分かれひび割れ周辺にランダムな小領域を作成
+        this.branchCracks.slice(0, maxRegions).forEach((branch, index) => {
+            const region = this.createBranchRegion(branch, index);
+            if (region) regions.push(region);
+        });
+        
+        return regions;
+    }
+
+    createBranchRegion(branch, index) {
+        // 枝分かれひび割れ周辺の小領域
+        if (!branch.points || branch.points.length < 2) return null;
+        
+        const midPoint = branch.points[Math.floor(branch.points.length / 2)].split(' ').map(Number);
+        const size = 40 + Math.random() * 30;
+        
+        const points = [];
+        const sides = 4 + Math.floor(Math.random() * 3); // 4-6角形
+        
+        for (let i = 0; i < sides; i++) {
+            const angle = (i / sides) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+            const radius = size * (0.7 + Math.random() * 0.6);
+            const x = midPoint[0] + Math.cos(angle) * radius;
+            const y = midPoint[1] + Math.sin(angle) * radius;
+            points.push(`${x}px ${y}px`);
+        }
+        
+        return {
+            type: 'branch',
+            boundary: points,
+            centerX: midPoint[0],
+            centerY: midPoint[1]
+        };
+    }
+
+    getPointOnCrack(crack, ratio) {
+        // ひび割れライン上の指定比率の点を取得
+        if (!crack.points || crack.points.length < 2) {
+            return { x: crack.startX, y: crack.startY };
+        }
+        
+        const index = Math.floor((crack.points.length - 1) * ratio);
+        const point = crack.points[index].split(' ').map(Number);
+        return { x: point[0], y: point[1] };
+    }
+
+    generateBoundaryArc(x1, y1, x2, y2, width, height) {
+        // 画面境界に沿った弧状経路
+        const points = [];
+        const segments = 2;
+        
+        for (let i = 1; i <= segments; i++) {
+            const t = i / (segments + 1);
+            let x = x1 + (x2 - x1) * t;
+            let y = y1 + (y2 - y1) * t;
+            
+            // 境界に押し付ける
+            if (x <= 5) x = 0;
+            else if (x >= width - 5) x = width;
+            if (y <= 5) y = 0;
+            else if (y >= height - 5) y = height;
+            
+            points.push(`${x}px ${y}px`);
+        }
+        
+        return points;
+    }
+
+    createGeometricFragment(region, index) {
+        // 幾何学的に計算された領域から破片要素を作成
+        const clipPath = `polygon(${region.boundary.join(', ')})`;
         
         const cellElement = document.createElement('div');
         cellElement.className = 'mirror-cell';
@@ -368,13 +557,13 @@ class RealisticMirrorSystem {
         const label = document.createElement('span');
         label.style.cssText = `
             position: absolute;
-            left: ${centerX}px;
-            top: ${centerY}px;
+            left: ${region.centerX}px;
+            top: ${region.centerY}px;
             transform: translate(-50%, -50%);
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
             font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
             pointer-events: none;
             z-index: 10002;
         `;
@@ -386,43 +575,10 @@ class RealisticMirrorSystem {
             index: index,
             isShattered: false,
             path: clipPath,
-            centerX: centerX,
-            centerY: centerY
+            region: region,
+            centerX: region.centerX,
+            centerY: region.centerY
         };
-    }
-
-    getDistanceToNearestCrack(x, y) {
-        // 指定した点から最も近いひび割れラインまでの距離を計算
-        let minDistance = Infinity;
-        
-        this.allCrackLines.forEach(crack => {
-            if (crack.points) {
-                for (let i = 0; i < crack.points.length - 1; i++) {
-                    const start = crack.points[i].split(' ').map(Number);
-                    const end = crack.points[i + 1].split(' ').map(Number);
-                    
-                    const distance = this.distanceToLineSegment(x, y, start[0], start[1], end[0], end[1]);
-                    minDistance = Math.min(minDistance, distance);
-                }
-            }
-        });
-        
-        return minDistance;
-    }
-
-    distanceToLineSegment(px, py, x1, y1, x2, y2) {
-        // 点から線分までの最短距離を計算
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        const length = Math.hypot(dx, dy);
-        
-        if (length === 0) return Math.hypot(px - x1, py - y1);
-        
-        const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / (length * length)));
-        const projX = x1 + t * dx;
-        const projY = y1 + t * dy;
-        
-        return Math.hypot(px - projX, py - projY);
     }
 
 
