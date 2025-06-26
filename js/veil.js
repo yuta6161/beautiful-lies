@@ -6,7 +6,7 @@ class RealisticMirrorSystem {
         this.veilMagic = veilMagic;
         this.cells = [];
         this.shatteredCount = 0;
-        this.totalCells = 30;
+        this.totalCells = 20;
         this.autoTriggerThreshold = Math.floor(this.totalCells * 0.6); // 60%で自動発動
         this.isShattered = false;
         this.mirrorLayer = null;
@@ -87,7 +87,7 @@ class RealisticMirrorSystem {
         const width = window.innerWidth;
         const height = window.innerHeight;
         
-        // 中央から放射状に30本のひび割れを生成
+        // 中央から放射状に20本のひび割れを生成
         this.crackPaths = [];
         
         for (let i = 0; i < this.totalCells; i++) {
@@ -136,7 +136,7 @@ class RealisticMirrorSystem {
     }
 
     createConnectedCells() {
-        // ひび割れラインで区切られた30個の連続したセルを作成
+        // ひび割れラインで区切られた20個の連続したセルを作成
         const width = window.innerWidth;
         const height = window.innerHeight;
         
@@ -320,11 +320,6 @@ class RealisticMirrorSystem {
             path.setAttribute('stroke-linejoin', 'round');
             path.setAttribute('opacity', '0');
             
-            // ひび割れアニメーション用の属性
-            path.style.strokeDasharray = '0';
-            path.style.strokeDashoffset = '0';
-            path.style.transition = 'stroke-dasharray 0.8s ease, opacity 0.3s ease';
-            
             svg.appendChild(path);
         });
         
@@ -358,28 +353,19 @@ class RealisticMirrorSystem {
     revealCracks() {
         if (this.crackLayer) {
             // SVGレイヤーを表示
-            this.crackLayer.style.transition = 'opacity 0.3s ease';
+            this.crackLayer.style.transition = 'opacity 0.2s ease';
             this.crackLayer.style.opacity = '1';
             
-            // 各ひび割れラインを順次アニメーション表示
+            // 全てのひび割れラインを一気に表示（鏡が瞬時に割れる表現）
             const crackPaths = this.crackLayer.querySelectorAll('path');
             crackPaths.forEach((path, index) => {
-                setTimeout(() => {
-                    // ひび割れが中央から外側に向かって現れるアニメーション
-                    const pathLength = path.getTotalLength();
-                    path.style.strokeDasharray = `${pathLength}`;
-                    path.style.strokeDashoffset = `${pathLength}`;
-                    path.style.opacity = '1';
-                    
-                    // アニメーション開始
-                    setTimeout(() => {
-                        path.style.transition = 'stroke-dashoffset 0.6s ease-out';
-                        path.style.strokeDashoffset = '0';
-                    }, 50);
-                }, index * 30); // 30ms間隔で順次表示
+                // 全てのひび割れを同時に表示
+                path.style.opacity = '1';
+                path.style.strokeDasharray = 'none';
+                path.style.strokeDashoffset = '0';
             });
             
-            console.log(`🪞 Revealing ${crackPaths.length} crack lines with animation`);
+            console.log(`🪞 Instantly revealed all ${crackPaths.length} crack lines - 鏡が一瞬で割れました！`);
         }
     }
 
