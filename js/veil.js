@@ -504,6 +504,9 @@ class VeilMagic {
     }
 
     forceBackgroundChange() {
+        // 最強の方法: 動的CSSを注入
+        this.injectTruthCSS();
+        
         // 背景を強制的に黒に変更 - 複数の方法で確実に
         document.body.style.setProperty('background', 'linear-gradient(135deg, #000000, #1a0000, #330000)', 'important');
         document.body.style.setProperty('background-image', 'linear-gradient(135deg, #000000, #1a0000, #330000)', 'important');
@@ -539,6 +542,47 @@ class VeilMagic {
         if (heroSection) {
             heroSection.style.setProperty('background', 'radial-gradient(circle, rgba(0,0,0,0.9), rgba(26,0,0,0.9))', 'important');
         }
+        
+        // すべての要素の背景を強制変更
+        const allElements = document.querySelectorAll('*');
+        allElements.forEach(element => {
+            if (element.tagName === 'BODY' || element.tagName === 'HTML') {
+                element.style.setProperty('background', 'linear-gradient(135deg, #000000, #1a0000, #330000)', 'important');
+                element.style.setProperty('background-color', '#000000', 'important');
+            }
+        });
+    }
+
+    injectTruthCSS() {
+        // 既存の強制CSSを削除
+        const existingStyle = document.getElementById('veil-truth-override');
+        if (existingStyle) existingStyle.remove();
+        
+        // 新しい強制CSSを注入
+        const style = document.createElement('style');
+        style.id = 'veil-truth-override';
+        style.textContent = `
+            html, body, #veil-container, #main-content {
+                background: linear-gradient(135deg, #000000, #1a0000, #330000) !important;
+                background-color: #000000 !important;
+                background-image: linear-gradient(135deg, #000000, #1a0000, #330000) !important;
+            }
+            
+            body.truth-revealed {
+                background: linear-gradient(135deg, #000000, #1a0000, #330000) !important;
+                background-color: #000000 !important;
+                background-image: linear-gradient(135deg, #000000, #1a0000, #330000) !important;
+            }
+            
+            .content-section {
+                background: rgba(20, 20, 20, 0.95) !important;
+                border: 2px solid #ff6b6b !important;
+                box-shadow: 0 0 20px rgba(255, 107, 107, 0.5) !important;
+            }
+        `;
+        
+        // CSSを最後に追加（最高優先度）
+        document.head.appendChild(style);
     }
 
     playSound(type) {
