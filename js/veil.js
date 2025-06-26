@@ -47,26 +47,35 @@ class MirrorShatterSystem {
     }
 
     createShatterContainer() {
+        // 既存のコンテナがあれば削除
+        const existing = document.getElementById('mirror-shatter-overlay');
+        if (existing) {
+            existing.remove();
+        }
+        
         this.shatterContainer = document.createElement('div');
         this.shatterContainer.id = 'mirror-shatter-overlay';
         this.shatterContainer.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10000;
-            pointer-events: auto;
-            background: url(data:image/svg+xml;base64,${this.createCrackPattern()});
-            background-size: cover;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 10000 !important;
+            pointer-events: auto !important;
+            background-color: rgba(255, 255, 255, 0.1) !important;
         `;
         
+        console.log('🪞 Container created, appending to body...');
         document.body.appendChild(this.shatterContainer);
+        console.log('🪞 Container appended successfully');
     }
 
     generateVoronoiShards() {
         const width = window.innerWidth;
         const height = window.innerHeight;
+        
+        console.log(`🪞 Screen size: ${width}x${height}`);
         
         // ランダムな点を生成（ボロノイ図の中心点）
         const points = [];
@@ -78,48 +87,69 @@ class MirrorShatterSystem {
             });
         }
         
+        console.log(`🪞 Generated ${points.length} points`);
+        
         // 各鏡面を作成
         points.forEach((point, index) => {
-            const shard = this.createShard(point, index, width, height);
-            this.shards.push(shard);
-            this.shatterContainer.appendChild(shard.element);
+            try {
+                console.log(`🪞 Creating shard ${index + 1}/${this.totalShards}`);
+                const shard = this.createShard(point, index, width, height);
+                this.shards.push(shard);
+                
+                if (this.shatterContainer) {
+                    this.shatterContainer.appendChild(shard.element);
+                    console.log(`🪞 Shard ${index + 1} added to container`);
+                } else {
+                    console.error('❌ Shatter container is null!');
+                }
+            } catch (error) {
+                console.error(`❌ Error creating shard ${index}:`, error);
+            }
         });
+        
+        console.log(`🪞 Total shards created: ${this.shards.length}`);
     }
 
     createShard(centerPoint, index, screenWidth, screenHeight) {
-        // 簡易ボロノイ計算（周囲の点との中点で境界を決定）
-        const shardPath = this.calculateShardPath(centerPoint, index, screenWidth, screenHeight);
+        // 簡易的な円形鏡面（デバッグ用）
+        const radius = 80 + Math.random() * 40; // 80-120px
         
         const shardElement = document.createElement('div');
         shardElement.className = 'mirror-shard';
         shardElement.dataset.shardId = index;
         shardElement.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            clip-path: ${shardPath};
-            background: 
-                radial-gradient(circle at ${centerPoint.x}px ${centerPoint.y}px, 
-                rgba(255, 255, 255, 0.3) 0%, 
-                rgba(255, 255, 255, 0.1) 50%, 
-                transparent 100%),
-                linear-gradient(${Math.random() * 360}deg, 
-                rgba(200, 200, 255, 0.2), 
-                rgba(255, 200, 255, 0.2));
-            backdrop-filter: blur(1px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: absolute !important;
+            left: ${centerPoint.x - radius}px !important;
+            top: ${centerPoint.y - radius}px !important;
+            width: ${radius * 2}px !important;
+            height: ${radius * 2}px !important;
+            border-radius: 50% !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1)) !important;
+            border: 2px solid rgba(255, 255, 255, 0.6) !important;
+            backdrop-filter: blur(2px) !important;
+            z-index: 10001 !important;
         `;
+        
+        // デバッグ用の番号表示
+        shardElement.innerHTML = `<span style="
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            text-shadow: 1px 1px 2px black;
+        ">${index + 1}</span>`;
         
         return {
             element: shardElement,
             centerPoint: centerPoint,
             index: index,
             isShattered: false,
-            path: shardPath
+            radius: radius
         };
     }
 
